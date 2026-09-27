@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Planner.Application\Planner.Application.csproj" />
+    <ProjectReference Include="..\Planner.Domain\Planner.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,43 @@
+# Estilo do código, lido pelos editores e pelo `dotnet format`.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+max_line_length = 120
+
+[*.{json,yml,yaml,xml,csproj,props,slnx}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+# Estilo inspirado no .clang-format do briel0/sumo-sdk.
+
+# Chaves na mesma linha da declaração ("K&R"), exceto o else, que vai para a linha seguinte:
+#   if(x) {
+#       ...
+#   }
+#   else {
+csharp_new_line_before_open_brace = none
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = false
+csharp_new_line_before_finally = false
+
+# Sem espaço entre a palavra-chave e o parêntese: "if(", "for(", "while("
+csharp_space_after_keywords_in_control_flow_statements = false
+
+# 'case' indentado um nível à frente do 'switch'
+csharp_indent_switch_labels = true
+csharp_indent_case_contents = true
+
+# Namespace declarado por arquivo ("namespace Planner.Domain;"), sem indentar o arquivo inteiro
+csharp_style_namespace_declarations = file_scoped:warning
+
+# Formatação verificada no build
+dotnet_diagnostic.IDE0055.severity = warning
