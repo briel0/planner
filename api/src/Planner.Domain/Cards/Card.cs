@@ -99,14 +99,8 @@ public sealed partial class Card {
         CategoryId = categoryId;
     }
 
-    private static string NormalizeTitle(string title) {
-        var trimmed = title.Trim();
-        if(trimmed.Length == 0 || trimmed.Length > TitleMaxLength) {
-            throw new DomainException(
-                "card.invalid-title", $"A card title must have between 1 and {TitleMaxLength} characters.");
-        }
-        return trimmed;
-    }
+    private static string NormalizeTitle(string title) =>
+        RequiredText.Normalize(title, TitleMaxLength, "card.invalid-title", "A card title");
 
     private static bool IsJsonObject(string json) {
         try {
