@@ -41,3 +41,7 @@ csharp_style_namespace_declarations = file_scoped:warning
 
 # Formatação verificada no build
 dotnet_diagnostic.IDE0055.severity = warning
+
+[api/tests/**.cs]
+# Nomes de teste descrevem o comportamento com '_' (ChangeColor_normalizes_to_lowercase)
+dotnet_diagnostic.CA1707.severity = none

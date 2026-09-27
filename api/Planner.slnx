@@ -5,4 +5,7 @@
     <Project Path="src/Planner.Domain/Planner.Domain.csproj" />
     <Project Path="src/Planner.Infrastructure/Planner.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Planner.Domain.Tests/Planner.Domain.Tests.csproj" />
+  </Folder>
 </Solution>

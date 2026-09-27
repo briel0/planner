@@ -32,6 +32,7 @@ Os dados precisam ser consumíveis por outros clientes no futuro (scripts, agent
 - **Backend: C# com ASP.NET Core (.NET).** Usado no trabalho; injeção de dependência nativa.
 - **Arquitetura do backend: Clean Architecture enxuta**, com modelo de domínio rico — ver `docs/backend-architecture.md`.
 - **Lint e formatação do backend:** ferramentas nativas do .NET. `.editorconfig` na raiz (estilo inspirado no `.clang-format` do sumo-sdk: chaves na mesma linha, `else` na linha seguinte, `if(` sem espaço, 4 espaços, 120 colunas); `api/Directory.Build.props` liga nullable, analisadores `latest-recommended`, estilo verificado no build e avisos como erros.
+- **Testes: xUnit v3** com o `Assert` nativo, em `api/tests/` espelhando os projetos (`Planner.Domain.Tests` primeiro). Testa-se o que tem regra e pode quebrar — cada invariante do domínio e cada bug corrigido —, não código trivial (getters, construtores sem lógica); cobertura não é meta. TDD no domínio.
 - **Acesso ao banco: Entity Framework Core** com o provedor `Npgsql.EntityFrameworkCore.PostgreSQL`. Consultas em LINQ; migrations geradas pelo EF Core; SQL manual só em casos pontuais de desempenho.
 - **Editor do conteúdo do cartão: Tiptap** (sobre ProseMirror), via `ngx-tiptap`. Conteúdo salvo como JSON do Tiptap (JSONB no Postgres). UI dos blocos (menu `/`, alça de arrastar) construída em componentes Angular. v1 só com parágrafo, título, lista e checklist.
 - **API: REST com aninhamento raso.** `docs/api-design.md` define as **convenções** que todo endpoint segue; os endpoints são criados conforme a necessidade, e a lista oficial é o OpenAPI gerado pelo código.
@@ -48,7 +49,7 @@ planner/
 ├── docs/api-design.md   # convenções da API (estilo, rotas, representações, erros)
 ├── docs/backend-architecture.md  # camadas, regra da dependência, domínio rico
 ├── .editorconfig        # estilo de código (lido pelos editores e pelo dotnet format)
-├── api/                 # ASP.NET Core: Planner.slnx, global.json, Directory.*.props, src/Planner.{Domain,Application,Infrastructure,Api}
+├── api/                 # ASP.NET Core: Planner.slnx, global.json, Directory.*.props, src/Planner.{Domain,Application,Infrastructure,Api}, tests/Planner.Domain.Tests
 └── web/                 # Angular (src/app/api/ = cliente gerado do OpenAPI, não editar à mão)
 ```
 
@@ -64,6 +65,7 @@ Outras ferramentas do ecossistema vivem em repositórios próprios e consomem o 
 ## Comandos (backend, dentro de `api/`)
 
 - `dotnet build` — compila; qualquer aviso (incluindo formatação e nulos) quebra o build.
+- `dotnet test` — roda os testes (xUnit v3 sobre a Microsoft.Testing.Platform, ativada em `api/global.json`).
 - `dotnet format` — corrige a formatação automaticamente; `dotnet format --verify-no-changes` só verifica.
 - Versões de pacotes NuGet ficam só em `api/Directory.Packages.props` (os `.csproj` referenciam sem versão).
 
@@ -77,7 +79,7 @@ O projeto deve seguir as práticas mais profissionais possíveis. Estas decisõe
 | Ativar o Ubuntu Pro (gratuito para uso pessoal; estende as atualizações de segurança do 20.04 até 2030) | o quanto antes — não bloqueia o código |
 | Atualizar o Ubuntu 20.04 → 24.04 (liberar espaço em disco antes: ~17 GB livres) | hospedar o app, ou alguma ferramenta deixar de funcionar no 20.04 |
 | Lint e formatação do Angular (ESLint, Prettier) | criar o projeto `web/` |
-| Estratégia de testes (unitários, integração com Postgres real, ex.: Testcontainers) | escrever a primeira regra de negócio |
+| Testes de integração com Postgres real (Testcontainers, projeto `Planner.Api.IntegrationTests`) | subir o Postgres pela primeira vez (precisa de Docker) |
 | Como a Application acessa a persistência (interfaces de repositório por agregado ou uma interface sobre o `DbContext`) e como mapear entidades ↔ DTOs | o primeiro caso de uso |
 | Configuração e segredos (`.env`, user-secrets, variáveis de ambiente) | a API se conectar ao banco pela primeira vez |
 | "Usuário atual" em desenvolvimento (usuário fixo/semeado até existir autenticação) | o primeiro endpoint que depende do usuário |
