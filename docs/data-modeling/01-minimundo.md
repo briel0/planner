@@ -8,9 +8,9 @@ As etapas seguintes (modelo conceitual, lógico e físico) derivam deste texto.
 
 O planner é usado por **vários usuários**. Cada usuário tem um **nome** e um **e-mail**, e só enxerga os próprios dados.
 
-Cada usuário organiza seus cartões em **categorias**. Cada categoria pertence a **exatamente um usuário**, tem um **nome** e aparece como uma aba no rodapé da tela, numa **ordem** escolhida pelo usuário. Cada categoria é exibida como **um único quadro**: um canvas livre.
+Cada usuário organiza seus cartões em **categorias**. Cada categoria pertence a **exatamente um usuário**, tem um **nome** — que não pode se repetir entre as categorias de um mesmo usuário (usuários diferentes podem ter categorias de mesmo nome) — e aparece como uma aba no rodapé da tela, numa **ordem** escolhida pelo usuário. Cada categoria é exibida como **um único quadro**: um canvas livre.
 
-Os quadros contêm **cartões**. Todo cartão tem um **título**, uma **cor**, uma **posição** no quadro onde está e, opcionalmente, um **conteúdo** em texto rico. Ao ser aberto, **todo cartão exibe seu próprio quadro**, que pode conter outros cartões, **sem limite de profundidade**. Todo cartão está em **exatamente um lugar**: no quadro de uma categoria ou no quadro de outro cartão.
+Os quadros contêm **cartões**. Todo cartão tem um **título**, uma **cor**, uma **posição** no quadro onde está e, opcionalmente, um **conteúdo** em texto rico. Ao ser aberto, **todo cartão exibe seu próprio quadro**, que pode conter outros cartões, **sem limite de profundidade**. Todo cartão está em **exatamente um lugar**: no quadro de uma categoria ou no quadro de outro cartão. Um cartão **nunca** pode estar dentro de si mesmo, nem dentro de um cartão que esteja dentro dele. Cartões de um mesmo quadro podem se **sobrepor**, e o usuário escolhe qual fica na frente (a **camada** do cartão).
 
 Um cartão pode ser de **um único tipo**. Uma **tarefa** é um cartão que tem, opcionalmente, uma **data**. Um cartão sem tipo específico é uma **nota**: um cartão genérico, que guarda informação no seu título e conteúdo.
 
