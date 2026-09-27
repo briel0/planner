@@ -30,6 +30,7 @@ Os dados precisam ser consumíveis por outros clientes no futuro (scripts, agent
 - **Ambiente: Docker.** Serviços (banco, API, web) rodam em containers via Docker Compose; dados do Postgres em volume. Por enquanto roda **só localmente** (nada exposto à internet).
 - **Frontend: Angular.** Usado no trabalho; foco em Angular moderno (standalone, signals, nova sintaxe de controle).
 - **Backend: C# com ASP.NET Core (.NET).** Usado no trabalho; injeção de dependência nativa.
+- **Arquitetura do backend: Clean Architecture enxuta**, com modelo de domínio rico — ver `docs/backend-architecture.md`.
 - **Acesso ao banco: Entity Framework Core** com o provedor `Npgsql.EntityFrameworkCore.PostgreSQL`. Consultas em LINQ; migrations geradas pelo EF Core; SQL manual só em casos pontuais de desempenho.
 - **Editor do conteúdo do cartão: Tiptap** (sobre ProseMirror), via `ngx-tiptap`. Conteúdo salvo como JSON do Tiptap (JSONB no Postgres). UI dos blocos (menu `/`, alça de arrastar) construída em componentes Angular. v1 só com parágrafo, título, lista e checklist.
 - **API: REST com aninhamento raso.** `docs/api-design.md` define as **convenções** que todo endpoint segue; os endpoints são criados conforme a necessidade, e a lista oficial é o OpenAPI gerado pelo código.
@@ -44,17 +45,40 @@ planner/
 ├── docker-compose.yml   # Postgres + API + web
 ├── docs/data-modeling/  # modelagem do banco, etapa por etapa
 ├── docs/api-design.md   # convenções da API (estilo, rotas, representações, erros)
-├── api/                 # ASP.NET Core (Planner.sln, src/, tests/)
+├── docs/backend-architecture.md  # camadas, regra da dependência, domínio rico
+├── api/                 # ASP.NET Core (Planner.sln; src/Planner.{Domain,Application,Infrastructure,Api}, tests/)
 └── web/                 # Angular (src/app/api/ = cliente gerado do OpenAPI, não editar à mão)
 ```
 
 Outras ferramentas do ecossistema vivem em repositórios próprios e consomem o planner apenas pela API.
 
-## Decisões em aberto
+## Decisões adiadas (não esquecer)
 
-- Ferramenta de geração do cliente OpenAPI para o Angular.
-- Onde hospedar (candidato: VPS rodando o mesmo Docker Compose; conferir benefícios de estudante: Azure for Students, GitHub Student Developer Pack).
-- Autenticação — só se torna obrigatória quando o app for para a internet.
+O projeto deve seguir as práticas mais profissionais possíveis. Estas decisões foram **adiadas de propósito**, não esquecidas: cada uma tem um **gatilho**. Ao começar uma tarefa que atinja um gatilho, **levantar a decisão com o dono do projeto antes de implementar**. Ao decidir, mover o item para "Decisões tomadas" (ou para o documento correspondente em `docs/`).
+
+| Decisão | Gatilho (decidir antes de...) |
+|---|---|
+| Atualizar o Ubuntu 20.04 → 24.04 e instalar Docker, .NET SDK, Node atual, Angular CLI | escrever o primeiro código |
+| Lint e formatação (`.editorconfig`, `dotnet format`, ESLint/Prettier) | criar os projetos `api/` e `web/` |
+| Estratégia de testes (unitários, integração com Postgres real, ex.: Testcontainers) | escrever a primeira regra de negócio |
+| Como a Application acessa a persistência (interfaces de repositório por agregado ou uma interface sobre o `DbContext`) e como mapear entidades ↔ DTOs | o primeiro caso de uso |
+| Configuração e segredos (`.env`, user-secrets, variáveis de ambiente) | a API se conectar ao banco pela primeira vez |
+| "Usuário atual" em desenvolvimento (usuário fixo/semeado até existir autenticação) | o primeiro endpoint que depende do usuário |
+| Paginação de listas | um endpoint de lista que possa crescer sem limite (ex.: consultas por prazo) |
+| Concorrência otimista (duas abas editando o mesmo card: `updatedAt`/ETag + `If-Match`) | o primeiro endpoint de alteração (`PATCH`) |
+| Idempotência de criação (id UUID gerado pelo cliente) | o primeiro endpoint de criação (`POST`) |
+| Ferramenta de geração do cliente OpenAPI para o Angular | o Angular chamar a API pela primeira vez |
+| CORS / proxy de desenvolvimento entre Angular e API | o Angular chamar a API pela primeira vez |
+| CI no GitHub Actions (build, testes, lint a cada push/PR) | existir código com testes |
+| Fluxo de branches e pull requests | existir código com CI |
+| Logs e observabilidade (logs estruturados, correlação de pedidos) | a API rodar fora da máquina de desenvolvimento |
+| Backup do banco | existirem dados reais que não podem ser perdidos |
+| Versionamento da API | o primeiro cliente além do Angular depender da API |
+| Autenticação e autorização | o app ir para a internet (ou o primeiro cliente externo) |
+| Hospedagem, domínio e HTTPS (candidato: VPS com o mesmo Docker Compose; conferir Azure for Students e GitHub Student Developer Pack) | o app ir para a internet |
+| Rate limiting (limite de pedidos por cliente) | o app ir para a internet |
+| Armazenamento de arquivos de imagem | o conteúdo dos cards aceitar imagens |
+| Hook `commit-msg` validando Conventional Commits | commits passarem a ser feitos à mão com frequência |
 
 ## Convenções
 
