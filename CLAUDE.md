@@ -3,7 +3,7 @@
 Planner organizado em categorias, com cartões em quadros de canvas livre; cada cartão abre seu próprio quadro, no estilo Notion.
 Os dados precisam ser consumíveis por outros clientes no futuro (scripts, agentes de IA etc.), não só pela UI.
 
-> Status: fase de concepção. Stack principal decidida; modelagem do banco em andamento (`docs/data-modeling/`). Ainda não há código.
+> Status: fase de concepção. Stack principal decidida; modelagem do banco concluída (`docs/data-modeling/`, do miniworld ao modelo físico). Ainda não há código.
 
 ## Visão do produto
 
