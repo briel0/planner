@@ -82,6 +82,56 @@ Example — a card summary:
 
 Not now — **field selection** (`?include=content`, GraphQL-style queries): no client needs it yet.
 
+## Errors
+
+Every error response uses **Problem Details** ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457)), with
+`Content-Type: application/problem+json`. ASP.NET Core produces this format natively.
+
+```json
+{
+  "type": "https://planner.dev/errors/card-cycle",
+  "title": "Card cannot be moved inside itself",
+  "status": 409,
+  "detail": "Card 'Física Q.' cannot be moved into 'Exerc. 5', which is inside it.",
+  "instance": "/cards/0192f6a3-7b1c-7cc2-9a4e-5d3b8f1e2a07",
+  "code": "card.cycle"
+}
+```
+
+| Field | Role |
+|---|---|
+| `type` | Identifies the kind of error (a URI that can document it) |
+| `title` | Short, fixed summary of that kind, for humans |
+| `status` | The HTTP status code, repeated for logs |
+| `detail` | Explanation of this specific occurrence, for humans |
+| `instance` | The resource involved |
+| `code` | **Extension.** Stable, machine-readable error code (`card.cycle`, `validation`, `category.name-taken`) |
+
+- **`code` is part of the contract; texts are not.** Programs branch on `code`, never on `title` or `detail`,
+  so messages can be reworded freely without breaking anyone. Every `code` is documented and never changes
+  meaning.
+- **Messages are in English.** Clients show their own messages chosen by `code`: the Angular app displays
+  Portuguese text, and other languages need no API change.
+- **Validation errors** (`400`, `code: "validation"`) add an `errors` object mapping each invalid field to its
+  messages, so clients can show every problem next to its field at once:
+
+```json
+{
+  "type": "https://planner.dev/errors/validation",
+  "title": "One or more fields are invalid",
+  "status": 400,
+  "code": "validation",
+  "errors": {
+    "title": ["Title must not be empty."],
+    "properties.dueOn": ["Must be a date in YYYY-MM-DD format."]
+  }
+}
+```
+
+- **Status codes:** `400` invalid request · `401` not authenticated · `404` not found or not yours ·
+  `409` conflicts with the current state (cycles, duplicate category names) · `500` server failure
+  (details are logged, never exposed to the client).
+
 ## Evolving the contract
 
 Once a client depends on an endpoint, changes must be **backward compatible**:
