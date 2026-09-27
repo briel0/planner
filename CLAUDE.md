@@ -52,13 +52,21 @@ planner/
 
 Outras ferramentas do ecossistema vivem em repositórios próprios e consomem o planner apenas pela API.
 
+## Ambiente de desenvolvimento
+
+- Ubuntu 20.04 (sem suporte oficial do .NET 10, mas testado e funcionando).
+- .NET SDK 10 em `~/.dotnet` (instalado com `dotnet-install.sh`; atualizar rodando o script de novo).
+- Node LTS via nvm (`~/.nvm`) e Angular CLI global (`npm install -g @angular/cli`).
+
 ## Decisões adiadas (não esquecer)
 
 O projeto deve seguir as práticas mais profissionais possíveis. Estas decisões foram **adiadas de propósito**, não esquecidas: cada uma tem um **gatilho**. Ao começar uma tarefa que atinja um gatilho, **levantar a decisão com o dono do projeto antes de implementar**. Ao decidir, mover o item para "Decisões tomadas" (ou para o documento correspondente em `docs/`).
 
 | Decisão | Gatilho (decidir antes de...) |
 |---|---|
-| Atualizar o Ubuntu 20.04 → 24.04 e instalar Docker, .NET SDK, Node atual, Angular CLI | escrever o primeiro código |
+| Instalar o Docker (repositório oficial; no Ubuntu 20.04 a última versão disponível é a 28.x) | subir o Postgres pela primeira vez |
+| Ativar o Ubuntu Pro (gratuito para uso pessoal; estende as atualizações de segurança do 20.04 até 2030) | o quanto antes — não bloqueia o código |
+| Atualizar o Ubuntu 20.04 → 24.04 (liberar espaço em disco antes: ~17 GB livres) | hospedar o app, ou alguma ferramenta deixar de funcionar no 20.04 |
 | Lint e formatação (`.editorconfig`, `dotnet format`, ESLint/Prettier) | criar os projetos `api/` e `web/` |
 | Estratégia de testes (unitários, integração com Postgres real, ex.: Testcontainers) | escrever a primeira regra de negócio |
 | Como a Application acessa a persistência (interfaces de repositório por agregado ou uma interface sobre o `DbContext`) e como mapear entidades ↔ DTOs | o primeiro caso de uso |
