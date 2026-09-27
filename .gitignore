@@ -1,0 +1,31 @@
+# Sistema operacional / editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Segredos e variáveis de ambiente (nunca versionar)
+.env
+.env.*
+!.env.example
+
+# .NET (api/)
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+appsettings.*.local.json
+
+# Angular / Node (web/)
+node_modules/
+dist/
+.angular/
+coverage/
+npm-debug.log*
+
+# Docker
+docker-data/
