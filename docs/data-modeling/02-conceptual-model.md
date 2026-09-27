@@ -9,13 +9,19 @@ there are no tables, columns or types here — those are decided in the logical 
 |---|---|---|
 | **User** | name, email | email |
 | **Category** | name, order | name + owning user (name unique per user) |
-| **Card** | title, color, position (x, y) *composite*, layer, content *optional* | no natural one — artificial in the logical model |
-| **Task** ⊂ Card | date *optional* | inherited from Card |
+| **Card** | title, color, position (x, y) *composite*, layer, content *optional*, properties *multivalued* | no natural one — artificial in the logical model |
 
-- **Note** is not an entity: it is a card with no specialization (it has no attributes of its own).
+All entities also record when they were created and last updated.
+
+- **Card types were dropped.** An earlier version specialized Card into Task (with a date) and Note. Once
+  properties became a flexible, growing catalog, the task's only attribute turned into a property like any
+  other, and the specialization lost its reason to exist. Every card now has the same shape.
+- **Properties** is a multivalued attribute: a set of (property, value) pairs taken from the system's catalog.
 - **Board** is not an entity: it has no attributes of its own; it is how the direct children of a category or card are displayed.
 - **Content** is a simple attribute: the database stores and reads it whole, even though it has internal structure (Tiptap blocks).
 - **Color, position and layer** are presentation attributes; the others are domain attributes.
+- **Content vs. properties:** material you read (text, tables, images) is content; information you filter
+  or query by (due date, done) is a property.
 
 ## Relationships and cardinalities
 
@@ -27,10 +33,6 @@ there are no tables, columns or types here — those are decided in the logical 
 | Category **holds** Card | A category holds (0,N) cards, at any depth. A card belongs to (1,1) category. | 1:N |
 | Card **contains** Card (roles: parent, child) | A parent card contains (0,N) children. A child card is inside (0,1) parent; with no parent, it sits on the category's board. | 1:N, self-relationship |
 
-## Specialization
-
-Card ⊃ Task — **disjoint** (a card has at most one type) and **partial** (a card may have no type: the note).
-
 ## ER diagram
 
 Peter Chen notation: rectangles are entities, diamonds are relationships, ellipses are attributes
@@ -41,18 +43,15 @@ flowchart LR
     U[User]
     C[Category]
     K[Card]
-    T[Task]
 
     R1{owns}
     R2{holds}
     R3{contains}
-    E(("is a"))
 
     U ---|"(0,N)"| R1 ---|"(1,1)"| C
     C ---|"(0,N)"| R2 ---|"(1,1)"| K
     K ---|"parent (0,N)"| R3
     R3 ---|"child (0,1)"| K
-    K --- E --- T
 
     u1(["name"]) --- U
     u2(["email (id)"]) --- U
@@ -63,7 +62,7 @@ flowchart LR
     k3(["position: x, y"]) --- K
     k4(["layer"]) --- K
     k5(["content?"]) --- K
-    t1(["date?"]) --- T
+    k6(["properties (multivalued)"]) --- K
 ```
 
 ## Constraints the diagram cannot express
