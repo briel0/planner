@@ -32,6 +32,7 @@ Os dados precisam ser consumíveis por outros clientes no futuro (scripts, agent
 - **Backend: C# com ASP.NET Core (.NET).** Usado no trabalho; injeção de dependência nativa.
 - **Acesso ao banco: Entity Framework Core** com o provedor `Npgsql.EntityFrameworkCore.PostgreSQL`. Consultas em LINQ; migrations geradas pelo EF Core; SQL manual só em casos pontuais de desempenho.
 - **Editor do conteúdo do cartão: Tiptap** (sobre ProseMirror), via `ngx-tiptap`. Conteúdo salvo como JSON do Tiptap (JSONB no Postgres). UI dos blocos (menu `/`, alça de arrastar) construída em componentes Angular. v1 só com parágrafo, título, lista e checklist.
+- **API: REST com aninhamento raso.** `docs/api-design.md` define as **convenções** que todo endpoint segue; os endpoints são criados conforme a necessidade, e a lista oficial é o OpenAPI gerado pelo código.
 - **Contrato: OpenAPI.** A API em .NET publica a especificação OpenAPI; o cliente TypeScript do Angular é gerado a partir dela (nunca escrito à mão). Outros serviços do ecossistema fazem o mesmo em suas linguagens.
 
 ## Estrutura do repositório
@@ -42,6 +43,7 @@ Monorepo: backend e frontend no mesmo repositório, cada um com suas ferramentas
 planner/
 ├── docker-compose.yml   # Postgres + API + web
 ├── docs/data-modeling/  # modelagem do banco, etapa por etapa
+├── docs/api-design.md   # convenções da API (estilo, rotas, representações, erros)
 ├── api/                 # ASP.NET Core (Planner.sln, src/, tests/)
 └── web/                 # Angular (src/app/api/ = cliente gerado do OpenAPI, não editar à mão)
 ```
