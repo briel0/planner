@@ -25,10 +25,11 @@ Os dados precisam ser consumíveis por outros clientes no futuro (scripts, agent
 - **Banco de dados: PostgreSQL.** Usado no trabalho; suporta vários serviços do ecossistema acessando via API.
 - **Quadro: canvas livre.** Cada cartão guarda sua posição (x, y) — dado de apresentação, separado do domínio.
 - **Campos da tarefa (v1): título + data.** Novos campos entram incrementalmente, via migrations.
-- **Ambiente: Docker.** Serviços (banco, API, web) rodam em containers; hospedagem definida depois.
+- **Ambiente: Docker.** Serviços (banco, API, web) rodam em containers via Docker Compose; dados do Postgres em volume. Por enquanto roda **só localmente** (nada exposto à internet).
 - **Frontend: Angular.** Usado no trabalho; foco em Angular moderno (standalone, signals, nova sintaxe de controle).
 - **Backend: C# com ASP.NET Core (.NET).** Usado no trabalho; injeção de dependência nativa.
 - **Acesso ao banco: Entity Framework Core** com o provedor `Npgsql.EntityFrameworkCore.PostgreSQL`. Consultas em LINQ; migrations geradas pelo EF Core; SQL manual só em casos pontuais de desempenho.
+- **Editor da página da tarefa: Tiptap** (sobre ProseMirror), via `ngx-tiptap`. Conteúdo salvo como JSON do Tiptap (JSONB no Postgres). UI dos blocos (menu `/`, alça de arrastar) construída em componentes Angular. v1 só com parágrafo, título, lista e checklist.
 - **Contrato: OpenAPI.** A API em .NET publica a especificação OpenAPI; o cliente TypeScript do Angular é gerado a partir dela (nunca escrito à mão). Outros serviços do ecossistema fazem o mesmo em suas linguagens.
 
 ## Estrutura do repositório
@@ -46,7 +47,15 @@ Outras ferramentas do ecossistema vivem em repositórios próprios e consomem o 
 
 ## Decisões em aberto
 
-- Editor de blocos da página da tarefa (candidato: Tiptap via ngx-tiptap).
 - Ferramenta de geração do cliente OpenAPI para o Angular.
-- Onde hospedar.
-- Autenticação.
+- Onde hospedar (candidato: VPS rodando o mesmo Docker Compose; conferir benefícios de estudante: Azure for Students, GitHub Student Developer Pack).
+- Autenticação — só se torna obrigatória quando o app for para a internet.
+
+## Convenções
+
+- **Commits em inglês, no padrão Conventional Commits** (o mesmo do repositório `briel0/sumo-sdk`):
+  - Título: `type(scope): summary` — minúsculo, imperativo, sem ponto final, até ~72 caracteres. Ex.: `feat(api): add endpoint to list tasks by date`.
+  - Tipos: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `tweak`. Escopos: `api`, `web`, `db`, `docker` etc. (opcional).
+  - Corpo: linha em branco após o título; explica o porquê e o que mudou, quebrado em ~72 colunas; listas com `-` quando houver várias mudanças.
+  - Sem trailers `Co-Authored-By` nem outras linhas de atribuição.
+- Nunca commitar sem aprovação explícita do dono do projeto.
