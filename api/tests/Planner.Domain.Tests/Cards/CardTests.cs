@@ -61,4 +61,82 @@ public class CardTests {
 
         Assert.Equal("card.invalid-title", error.Code);
     }
+
+    [Fact]
+    public void Rename_applies_the_same_title_rules() {
+        var card = CreateCard();
+
+        card.Rename("  Prova 1  ");
+
+        Assert.Equal("Prova 1", card.Title);
+        var error = Assert.Throws<DomainException>(() => card.Rename("   "));
+        Assert.Equal("card.invalid-title", error.Code);
+    }
+
+    [Fact]
+    public void ChangeContent_accepts_a_json_object_or_null() {
+        var card = CreateCard();
+
+        card.ChangeContent("""{"type":"doc","content":[]}""");
+        Assert.Equal("""{"type":"doc","content":[]}""", card.Content);
+
+        card.ChangeContent(null);
+        Assert.Null(card.Content);
+    }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("42")]
+    [InlineData("\"text\"")]
+    [InlineData("not json")]
+    [InlineData("{\"unclosed\": ")]
+    public void ChangeContent_rejects_anything_but_a_json_object(string content) {
+        var card = CreateCard();
+
+        var error = Assert.Throws<DomainException>(() => card.ChangeContent(content));
+
+        Assert.Equal("card.invalid-content", error.Code);
+    }
+
+    [Fact]
+    public void CreateInside_places_the_card_in_the_parent_board_and_category() {
+        var parent = CreateCard();
+
+        var child = Card.CreateInside(parent, "Exercício 5");
+
+        Assert.Equal(parent.Id, child.ParentId);
+        Assert.Equal(parent.CategoryId, child.CategoryId);
+    }
+
+    [Fact]
+    public void MoveInto_takes_the_parent_category() {
+        var parent = Card.Create(Guid.CreateVersion7(), "Física Quântica");
+        var card = Card.Create(Guid.CreateVersion7(), "Lista 3");
+
+        card.MoveInto(parent);
+
+        Assert.Equal(parent.Id, card.ParentId);
+        Assert.Equal(parent.CategoryId, card.CategoryId);
+    }
+
+    [Fact]
+    public void MoveInto_rejects_moving_a_card_inside_itself() {
+        var card = CreateCard();
+
+        var error = Assert.Throws<DomainException>(() => card.MoveInto(card));
+
+        Assert.Equal("card.cycle", error.Code);
+    }
+
+    [Fact]
+    public void MoveToRoot_leaves_the_parent_board() {
+        var parent = CreateCard();
+        var card = Card.CreateInside(parent, "Lista 3");
+        var otherCategory = Guid.CreateVersion7();
+
+        card.MoveToRoot(otherCategory);
+
+        Assert.Null(card.ParentId);
+        Assert.Equal(otherCategory, card.CategoryId);
+    }
 }
