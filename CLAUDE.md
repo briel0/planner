@@ -25,7 +25,7 @@ Os dados precisam ser consumíveis por outros clientes no futuro (scripts, agent
 
 - **Banco de dados: PostgreSQL.** Usado no trabalho; suporta vários serviços do ecossistema acessando via API.
 - **Quadro: canvas livre.** Cada cartão guarda sua posição (x, y) — dado de apresentação, separado do domínio.
-- **Modelagem do banco: método clássico** (minimundo → conceitual → lógico → físico), documentado em `docs/data-modeling/`. O minimundo em `docs/data-modeling/01-minimundo.md` é a fonte de verdade dos requisitos de dados.
+- **Modelagem do banco: método clássico** (minimundo → conceitual → lógico → físico), documentado em `docs/data-modeling/`. O minimundo em `docs/data-modeling/01-miniworld.md` é a fonte de verdade dos requisitos de dados.
 - **Ambiente: Docker.** Serviços (banco, API, web) rodam em containers via Docker Compose; dados do Postgres em volume. Por enquanto roda **só localmente** (nada exposto à internet).
 - **Frontend: Angular.** Usado no trabalho; foco em Angular moderno (standalone, signals, nova sintaxe de controle).
 - **Backend: C# com ASP.NET Core (.NET).** Usado no trabalho; injeção de dependência nativa.
@@ -40,7 +40,7 @@ Monorepo: backend e frontend no mesmo repositório, cada um com suas ferramentas
 ```
 planner/
 ├── docker-compose.yml   # Postgres + API + web
-├── docs/data-modeling/ # modelagem do banco, etapa por etapa
+├── docs/data-modeling/  # modelagem do banco, etapa por etapa
 ├── api/                 # ASP.NET Core (Planner.sln, src/, tests/)
 └── web/                 # Angular (src/app/api/ = cliente gerado do OpenAPI, não editar à mão)
 ```
