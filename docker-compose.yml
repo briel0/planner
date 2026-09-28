@@ -1,0 +1,24 @@
+# Ambiente de desenvolvimento. Segredos vêm do arquivo .env (fora do Git); veja .env.example.
+name: planner
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: planner
+      POSTGRES_USER: planner
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no arquivo .env (veja .env.example)}
+    ports:
+      # Só este computador acessa o banco (não fica exposto para a rede local).
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # A partir do Postgres 18, a imagem guarda os dados em subpastas de /var/lib/postgresql.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U planner -d planner"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:

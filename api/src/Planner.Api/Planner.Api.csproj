@@ -1,5 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+  <PropertyGroup>
+    <!-- Segredos de desenvolvimento ficam em ~/.microsoft/usersecrets/<este id>/, fora do repositório. -->
+    <UserSecretsId>055b3c78-1503-425a-aba2-3d8bf94a069b</UserSecretsId>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
   </ItemGroup>

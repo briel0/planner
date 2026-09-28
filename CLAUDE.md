@@ -33,6 +33,7 @@ Os dados precisam ser consumíveis por outros clientes no futuro (scripts, agent
 - **Arquitetura do backend: Clean Architecture enxuta**, com modelo de domínio rico — ver `docs/backend-architecture.md`.
 - **Lint e formatação do backend:** ferramentas nativas do .NET. `.editorconfig` na raiz (estilo inspirado no `.clang-format` do sumo-sdk: chaves na mesma linha, `else` na linha seguinte, `if(` sem espaço, 4 espaços, 120 colunas); `api/Directory.Build.props` liga nullable, analisadores `latest-recommended`, estilo verificado no build e avisos como erros.
 - **Testes: xUnit v3** com o `Assert` nativo, em `api/tests/` espelhando os projetos (`Planner.Domain.Tests` primeiro). Testa-se o que tem regra e pode quebrar — cada invariante do domínio e cada bug corrigido —, não código trivial (getters, construtores sem lógica); cobertura não é meta. TDD no domínio.
+- **Configuração e segredos:** segredos nunca vão para o Git. Docker Compose lê a senha do Postgres de `.env` (ignorado; modelo em `.env.example`); a API, em desenvolvimento, lê a string de conexão `ConnectionStrings:Planner` do User Secrets; em produção, de variáveis de ambiente. O Postgres só escuta em `127.0.0.1`.
 - **Acesso ao banco: Entity Framework Core** com o provedor `Npgsql.EntityFrameworkCore.PostgreSQL`. Consultas em LINQ; migrations geradas pelo EF Core; SQL manual só em casos pontuais de desempenho.
 - **Editor do conteúdo do cartão: Tiptap** (sobre ProseMirror), via `ngx-tiptap`. Conteúdo salvo como JSON do Tiptap (JSONB no Postgres). UI dos blocos (menu `/`, alça de arrastar) construída em componentes Angular. v1 só com parágrafo, título, lista e checklist.
 - **API: REST com aninhamento raso.** `docs/api-design.md` define as **convenções** que todo endpoint segue; os endpoints são criados conforme a necessidade, e a lista oficial é o OpenAPI gerado pelo código.
@@ -44,7 +45,8 @@ Monorepo: backend e frontend no mesmo repositório, cada um com suas ferramentas
 
 ```
 planner/
-├── docker-compose.yml   # Postgres + API + web
+├── docker-compose.yml   # ambiente de desenvolvimento (hoje: Postgres 18)
+├── .env.example         # modelo do .env (segredos locais, fora do Git)
 ├── docs/data-modeling/  # modelagem do banco, etapa por etapa
 ├── docs/api-design.md   # convenções da API (estilo, rotas, representações, erros)
 ├── docs/backend-architecture.md  # camadas, regra da dependência, domínio rico
@@ -60,7 +62,14 @@ Outras ferramentas do ecossistema vivem em repositórios próprios e consomem o 
 - Ubuntu 20.04 (sem suporte oficial do .NET 10, mas testado e funcionando).
 - .NET SDK 10 em `~/.dotnet` (instalado com `dotnet-install.sh`; atualizar rodando o script de novo).
 - `DOTNET_SYSTEM_NET_DISABLEIPV6=1` no `~/.zshrc`: nesta rede, conexões IPv6 do .NET travam (o restore do NuGet ficava parado).
+- Docker Engine 28.1.1 + Compose v2 pelo repositório oficial (última versão publicada para o 20.04); usuário no grupo `docker`.
 - Node LTS via nvm (`~/.nvm`) e Angular CLI global (`npm install -g @angular/cli`).
+
+## Primeira configuração (máquina nova)
+
+1. `cp .env.example .env` e preencher `POSTGRES_PASSWORD` (ex.: `openssl rand -hex 24`).
+2. `docker compose up -d --wait` (na raiz) sobe o Postgres.
+3. Em `api/`: `dotnet user-secrets set "ConnectionStrings:Planner" "Host=localhost;Port=5432;Database=planner;Username=planner;Password=<a mesma senha>" --project src/Planner.Api`.
 
 ## Comandos (backend, dentro de `api/`)
 
@@ -75,13 +84,11 @@ O projeto deve seguir as práticas mais profissionais possíveis. Estas decisõe
 
 | Decisão | Gatilho (decidir antes de...) |
 |---|---|
-| Instalar o Docker (repositório oficial; no Ubuntu 20.04 a última versão disponível é a 28.x) | subir o Postgres pela primeira vez |
 | Ativar o Ubuntu Pro (gratuito para uso pessoal; estende as atualizações de segurança do 20.04 até 2030) | o quanto antes — não bloqueia o código |
 | Atualizar o Ubuntu 20.04 → 24.04 (liberar espaço em disco antes: ~17 GB livres) | hospedar o app, ou alguma ferramenta deixar de funcionar no 20.04 |
 | Lint e formatação do Angular (ESLint, Prettier) | criar o projeto `web/` |
 | Testes de integração com Postgres real (Testcontainers, projeto `Planner.Api.IntegrationTests`) | subir o Postgres pela primeira vez (precisa de Docker) |
 | Como a Application acessa a persistência (interfaces de repositório por agregado ou uma interface sobre o `DbContext`) e como mapear entidades ↔ DTOs | o primeiro caso de uso |
-| Configuração e segredos (`.env`, user-secrets, variáveis de ambiente) | a API se conectar ao banco pela primeira vez |
 | "Usuário atual" em desenvolvimento (usuário fixo/semeado até existir autenticação) | o primeiro endpoint que depende do usuário |
 | Paginação de listas | um endpoint de lista que possa crescer sem limite (ex.: consultas por prazo) |
 | Concorrência otimista (duas abas editando o mesmo card: `updatedAt`/ETag + `If-Match`) | o primeiro endpoint de alteração (`PATCH`) |
