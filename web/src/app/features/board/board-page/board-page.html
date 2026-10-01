@@ -1,0 +1,113 @@
+@switch (store.status()) {
+  @case ('not-found') {
+    <section class="message">
+      <h1>Quadro não encontrado</h1>
+      <p>Ele pode ter sido apagado.</p>
+    </section>
+  }
+  @default {
+    <header class="board-header">
+      <nav class="trail" aria-label="Trilha de navegação">
+        @if (category(); as category) {
+          @if (store.trail().length === 0) {
+            <span class="trail-current" aria-current="page">{{ category.name }}</span>
+          } @else {
+            <a class="trail-link" [routerLink]="['/categories', category.id]">{{ category.name }}</a>
+          }
+        }
+        @for (ref of store.trail(); track ref.id; let last = $last) {
+          <mat-icon class="trail-separator" aria-hidden="true">chevron_right</mat-icon>
+          @if (last) {
+            <span class="trail-current" aria-current="page">{{ ref.title }}</span>
+          } @else {
+            <a class="trail-link" [routerLink]="['/cards', ref.id]">{{ ref.title }}</a>
+          }
+        }
+      </nav>
+
+      <button matButton="tonal" [disabled]="store.status() !== 'ready'" (click)="createAtCenter()">
+        <mat-icon>add</mat-icon>
+        Cartão
+      </button>
+    </header>
+
+    <div #viewport class="viewport">
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+      <div class="canvas" (click)="selectedId.set(null)" (dblclick)="createAtPointer($event)">
+        @for (card of store.cards(); track card.id) {
+          <app-card-view
+            cdkDrag
+            cdkDragBoundary=".canvas"
+            [cdkDragFreeDragPosition]="card.position"
+            [cdkDragDisabled]="editingId() === card.id"
+            [style.z-index]="card.layer"
+            [card]="card"
+            [selected]="selectedId() === card.id"
+            [editing]="editingId() === card.id"
+            (cdkDragEnded)="onDragEnded(card, $event)"
+            (selectedChange)="selectedId.set(card.id)"
+            (keyAction)="onKeyAction(card, $event)"
+            (menuRequested)="openMenu(card, $event)"
+            (renamed)="onRenamed(card, $event)"
+            (renameCancelled)="cancelRename()"
+          />
+        }
+        @if (store.status() === 'ready' && store.cards().length === 0) {
+          <p class="empty-hint">Dê dois cliques em qualquer lugar ou use <strong>+ Cartão</strong> para criar.</p>
+        }
+      </div>
+    </div>
+  }
+}
+
+<!-- Menu do botão direito: um gatilho invisível posicionado onde o clique aconteceu. -->
+<div
+  #menuTrigger="matMenuTrigger"
+  class="menu-anchor"
+  aria-hidden="true"
+  [matMenuTriggerFor]="cardMenu"
+  [style.left.px]="menuPosition().x"
+  [style.top.px]="menuPosition().y"
+></div>
+<mat-menu #cardMenu="matMenu">
+  @if (menuCard(); as card) {
+    <button mat-menu-item (click)="onKeyAction(card, 'open')">
+      <mat-icon>open_in_new</mat-icon><span>Abrir</span>
+    </button>
+    <button mat-menu-item (click)="onKeyAction(card, 'rename')"><mat-icon>edit</mat-icon><span>Renomear</span></button>
+    <button mat-menu-item (click)="pickColor(card)"><mat-icon>palette</mat-icon><span>Cor</span></button>
+    <button mat-menu-item (click)="pickDueDate(card)">
+      <mat-icon>event</mat-icon><span>{{ card.properties.dueOn ? 'Mudar prazo' : 'Definir prazo' }}</span>
+    </button>
+    @if (card.properties.dueOn) {
+      <button mat-menu-item (click)="removeDueDate(card)">
+        <mat-icon>event_busy</mat-icon><span>Remover prazo</span>
+      </button>
+    }
+    <button mat-menu-item (click)="toggleDone(card)">
+      <mat-icon>{{ card.properties.done ? 'radio_button_unchecked' : 'check_circle' }}</mat-icon>
+      <span>{{ card.properties.done ? 'Marcar como não feito' : 'Marcar como feito' }}</span>
+    </button>
+    <button mat-menu-item (click)="delete(card)"><mat-icon>delete</mat-icon><span>Apagar</span></button>
+  }
+</mat-menu>
+
+<!-- Seletores nativos do navegador, abertos pelo menu (cor livre e prazo em YYYY-MM-DD). -->
+<input
+  #colorInput
+  class="native-picker"
+  type="color"
+  aria-label="Cor do cartão"
+  [style.left.px]="menuPosition().x"
+  [style.top.px]="menuPosition().y"
+  (change)="onColorPicked(colorInput.value)"
+/>
+<input
+  #dateInput
+  class="native-picker"
+  type="date"
+  aria-label="Prazo do cartão"
+  [style.left.px]="menuPosition().x"
+  [style.top.px]="menuPosition().y"
+  (change)="onDueDatePicked(dateInput.value)"
+/>

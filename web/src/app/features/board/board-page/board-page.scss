@@ -1,4 +1,71 @@
-.placeholder {
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.trail {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.trail-link {
+  color: var(--mat-sys-on-surface-variant);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--mat-sys-primary);
+    text-decoration: underline;
+  }
+}
+
+.trail-current {
+  font-weight: 600;
+}
+
+.trail-separator {
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1.25rem;
+  color: var(--mat-sys-outline);
+}
+
+.viewport {
+  flex: 1;
+  overflow: auto;
+}
+
+// O canvas: uma área grande com uma grade de pontinhos, onde os cartões ficam em posições livres.
+.canvas {
+  position: relative;
+  width: 4000px;
+  height: 3000px;
+  background-color: var(--mat-sys-surface-container-lowest);
+  background-image: radial-gradient(var(--mat-sys-outline-variant) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.empty-hint {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.message {
   padding: 2rem;
   color: var(--mat-sys-on-surface-variant);
 
@@ -7,4 +74,19 @@
     font-size: 1.5rem;
     color: var(--mat-sys-on-surface);
   }
+}
+
+.menu-anchor,
+.native-picker {
+  position: fixed;
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.menu-anchor {
+  visibility: hidden;
 }

@@ -1,0 +1,86 @@
+:host {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 13rem;
+  min-height: 4rem;
+  padding: 0.75rem;
+  border: 1px solid rgb(0 0 0 / 12%);
+  border-radius: var(--mat-sys-corner-small);
+  color: #1b1b1f;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+  cursor: grab;
+  user-select: none;
+
+  &:focus-visible,
+  &.selected {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+
+  &.light-text {
+    color: #ffffff;
+  }
+
+  &.done .title {
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+}
+
+// Enquanto é arrastado (classe do Angular CDK).
+:host(.cdk-drag-dragging) {
+  cursor: grabbing;
+  box-shadow: 0 8px 20px rgb(0 0 0 / 20%);
+}
+
+.title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.title-input {
+  font: inherit;
+  font-weight: 600;
+  padding: 0.125rem 0.25rem;
+  border: 1px solid var(--mat-sys-primary);
+  border-radius: var(--mat-sys-corner-extra-small);
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface);
+  outline: none;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--mat-sys-corner-extra-small);
+  font-size: 0.8125rem;
+  background: rgb(0 0 0 / 8%);
+
+  :host(.light-text) & {
+    background: rgb(255 255 255 / 18%);
+  }
+
+  &.overdue {
+    color: #ffffff;
+    background: var(--mat-sys-error);
+  }
+
+  mat-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+}

@@ -1,6 +1,6 @@
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Component, ElementRef, effect, inject, signal, viewChild } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatIconButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
@@ -19,18 +19,7 @@ const NEW_CATEGORY_NAME = 'Nova categoria';
  */
 @Component({
   selector: 'app-category-tabs',
-  imports: [
-    CdkDropList,
-    CdkDrag,
-    RouterLink,
-    RouterLinkActive,
-    MatIconButton,
-    MatIcon,
-    MatMenu,
-    MatMenuItem,
-    MatMenuTrigger,
-    MatTooltip,
-  ],
+  imports: [CdkDropList, CdkDrag, RouterLink, MatIconButton, MatIcon, MatMenu, MatMenuItem, MatMenuTrigger, MatTooltip],
   templateUrl: './category-tabs.html',
   styleUrl: './category-tabs.scss',
 })
@@ -119,7 +108,7 @@ export class CategoryTabs {
     }
     try {
       await this.store.delete(category.id);
-      if (this.router.url.startsWith(`/categories/${category.id}`)) {
+      if (this.store.activeCategoryId() === category.id) {
         await this.router.navigate(['/']);
       }
     } catch (error) {

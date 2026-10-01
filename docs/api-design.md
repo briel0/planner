@@ -75,10 +75,18 @@ Example — a card summary:
   "position": { "x": 120.5, "y": 80 },
   "layer": 2,
   "properties": { "dueOn": "2026-09-30", "done": false },
+  "childCount": 2,
   "createdAt": "2026-09-28T03:12:45Z",
   "updatedAt": "2026-09-28T03:40:02Z"
 }
 ```
+
+Card-specific fields:
+
+- **`childCount`** (summary and full): how many cards are on the card's own board. Lets clients show that a
+  card has content inside and ask for confirmation before deleting a subtree, without loading it.
+- **`ancestors`** (full representation only): the cards above this one, from the root down to the direct parent,
+  as `{ "id", "title" }`. Clients build the navigation trail (category › card › card) from it in one request.
 
 Not now — **field selection** (`?include=content`, GraphQL-style queries): no client needs it yet.
 

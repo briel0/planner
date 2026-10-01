@@ -1,0 +1,29 @@
+@if (editing()) {
+  <input
+    #titleInput
+    class="title-input"
+    aria-label="Título do cartão"
+    [value]="card().title"
+    (click)="$event.stopPropagation()"
+    (dblclick)="$event.stopPropagation()"
+    (keydown.enter)="commit(titleInput.value)"
+    (keydown.escape)="renameCancelled.emit()"
+    (blur)="commit(titleInput.value)"
+  />
+} @else {
+  <span class="title">{{ card().title }}</span>
+}
+
+@if (due() || card().properties.done || card().childCount > 0) {
+  <div class="meta">
+    @if (card().properties.done) {
+      <span class="chip"><mat-icon>check_circle</mat-icon>Feito</span>
+    }
+    @if (due(); as due) {
+      <span class="chip" [class.overdue]="due.overdue"><mat-icon>event</mat-icon>{{ due.label }}</span>
+    }
+    @if (card().childCount > 0) {
+      <span class="chip" title="Cartões dentro deste"><mat-icon>folder</mat-icon>{{ card().childCount }}</span>
+    }
+  </div>
+}

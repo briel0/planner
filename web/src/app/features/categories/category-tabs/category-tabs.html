@@ -15,7 +15,8 @@
         } @else {
           <a
             class="tab-link"
-            routerLinkActive="active"
+            [class.active]="category.id === store.activeCategoryId()"
+            [attr.aria-current]="category.id === store.activeCategoryId() ? 'page' : null"
             [routerLink]="['/categories', category.id]"
             (dblclick)="startRename(category)"
             (contextmenu)="openMenu($event, category)"

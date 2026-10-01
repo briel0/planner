@@ -7,5 +7,9 @@ export const routes: Routes = [
     path: 'categories/:categoryId',
     loadComponent: () => import('./features/board/board-page/board-page').then((m) => m.BoardPage),
   },
+  {
+    path: 'cards/:cardId',
+    loadComponent: () => import('./features/board/board-page/board-page').then((m) => m.BoardPage),
+  },
   { path: '**', redirectTo: '' },
 ];

@@ -10,6 +10,9 @@ export class CategoriesStore {
   private readonly state = signal<Category[]>([]);
   private readonly loaded = signal(false);
 
+  /** Categoria do quadro aberto (de um cartão em qualquer profundidade, inclusive); destaca a aba no rodapé. */
+  readonly activeCategoryId = signal<string | null>(null);
+
   /** Categorias na ordem das abas. */
   readonly categories = computed(() => [...this.state()].sort((a, b) => a.sortOrder - b.sortOrder));
   readonly isLoaded = this.loaded.asReadonly();
