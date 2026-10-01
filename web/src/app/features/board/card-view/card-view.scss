@@ -6,9 +6,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  width: 13rem;
-  min-height: 4rem;
   padding: 0.75rem;
+  overflow: hidden; // o tamanho escolhido é respeitado: o que não couber fica cortado
   border: 1px solid rgb(0 0 0 / 12%);
   border-radius: var(--mat-sys-corner-small);
   color: #1b1b1f;
@@ -30,6 +29,36 @@
     text-decoration: line-through;
     opacity: 0.7;
   }
+}
+
+// O canto inferior direito: aparece ao passar o mouse sobre o cartão.
+.resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 1rem;
+  height: 1rem;
+  cursor: nwse-resize;
+  opacity: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    currentColor 50% 60%,
+    transparent 60% 70%,
+    currentColor 70% 80%,
+    transparent 80%
+  );
+  transition: opacity 120ms ease;
+
+  :host(:hover) &,
+  :host(.resizing) &,
+  :host(.selected) & {
+    opacity: 0.5;
+  }
+}
+
+:host(.resizing) {
+  cursor: nwse-resize;
 }
 
 // Enquanto é arrastado (classe do Angular CDK).

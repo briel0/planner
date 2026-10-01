@@ -14,6 +14,14 @@
   <span class="title">{{ card().title }}</span>
 }
 
+<!-- Alça de redimensionar: o canto inferior direito. -->
+<span
+  class="resize-handle"
+  aria-hidden="true"
+  (pointerdown)="startResize($event)"
+  (mousedown)="$event.stopPropagation()"
+></span>
+
 @if (due() || card().properties.done || card().childCount > 0) {
   <div class="meta">
     @if (card().properties.done) {

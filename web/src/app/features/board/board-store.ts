@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Card, CardChanges, CardLocation, CardRef, Position } from '../../core/data/models';
+import { Card, CardChanges, CardLocation, CardRef, Position, Size } from '../../core/data/models';
 import { PlannerData } from '../../core/data/planner-data';
 
 /**
@@ -55,16 +55,12 @@ export class BoardStore {
 
   /** Mover é otimista: o cartão fica onde foi solto já; se salvar falhar, volta para onde estava. */
   async move(id: string, position: Position): Promise<void> {
-    const previous = this.cards().find((c) => c.id === id)?.position;
-    this.replace(id, (card) => ({ ...card, position }));
-    try {
-      await this.change(id, { position });
-    } catch (error) {
-      if (previous) {
-        this.replace(id, (card) => ({ ...card, position: previous }));
-      }
-      throw error;
-    }
+    await this.optimistic(id, { position });
+  }
+
+  /** Redimensionar também é otimista, pelo mesmo motivo. */
+  async resize(id: string, size: Size): Promise<void> {
+    await this.optimistic(id, { size });
   }
 
   async delete(id: string): Promise<void> {
@@ -92,6 +88,19 @@ export class BoardStore {
       if (request === this.request) {
         this.cards.set([]);
         this.status.set('not-found');
+      }
+      throw error;
+    }
+  }
+
+  private async optimistic(id: string, changes: Pick<CardChanges, 'position' | 'size'>): Promise<void> {
+    const before = this.cards().find((c) => c.id === id);
+    this.replace(id, (card) => ({ ...card, ...changes }));
+    try {
+      await this.change(id, changes);
+    } catch (error) {
+      if (before) {
+        this.replace(id, (card) => ({ ...card, position: before.position, size: before.size }));
       }
       throw error;
     }

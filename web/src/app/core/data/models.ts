@@ -17,6 +17,12 @@ export interface Position {
   y: number;
 }
 
+/** Tamanho de um cartão, em pixels do canvas (limites em card-size.ts). */
+export interface Size {
+  width: number;
+  height: number;
+}
+
 /** Propriedades do catálogo. Uma propriedade ausente significa que o cartão não a tem. */
 export interface CardProperties {
   /** Prazo: o dia até o qual o cartão precisa estar pronto (YYYY-MM-DD). */
@@ -35,6 +41,7 @@ export interface Card {
   /** Cor livre, no formato #rrggbb (minúsculas). */
   color: string;
   position: Position;
+  size: Size;
   /** Ordem de sobreposição no quadro: maior fica na frente. */
   layer: number;
   properties: CardProperties;
@@ -63,5 +70,6 @@ export interface CardChanges {
   title?: string;
   color?: string;
   position?: Position;
+  size?: Size;
   properties?: CardProperties;
 }

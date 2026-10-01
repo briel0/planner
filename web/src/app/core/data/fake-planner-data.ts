@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Card, CardChanges, CardDetails, CardLocation, CardProperties, Category, Position } from './models';
+import { CARD_SIZE } from './card-size';
+import { Card, CardChanges, CardDetails, CardLocation, CardProperties, Category, Position, Size } from './models';
 import { PlannerData, PlannerDataError } from './planner-data';
 
 const CATEGORY_NAME_MAX_LENGTH = 100;
@@ -91,6 +92,7 @@ export class FakePlannerData extends PlannerData {
       title: this.validateTitle(input.title),
       color: DEFAULT_CARD_COLOR,
       position: this.validatePosition(input.position),
+      size: { ...CARD_SIZE.default },
       layer: Math.max(-1, ...siblings.map((c) => c.layer)) + 1, // nasce na frente dos outros
       properties: {},
       ...timestamps(),
@@ -106,6 +108,7 @@ export class FakePlannerData extends PlannerData {
       title: changes.title === undefined ? card.title : this.validateTitle(changes.title),
       color: changes.color === undefined ? card.color : this.validateColor(changes.color),
       position: changes.position === undefined ? card.position : this.validatePosition(changes.position),
+      size: changes.size === undefined ? card.size : this.validateSize(changes.size),
       properties: changes.properties === undefined ? card.properties : withoutEmpty(changes.properties),
       updatedAt: now(),
     };
@@ -193,6 +196,15 @@ export class FakePlannerData extends PlannerData {
     return { x: position.x, y: position.y };
   }
 
+  private validateSize(size: Size): Size {
+    const { min, max } = CARD_SIZE;
+    const fits = (value: number, low: number, high: number) => value >= low && value <= high;
+    if (!fits(size.width, min.width, max.width) || !fits(size.height, min.height, max.height)) {
+      throw new PlannerDataError('card.invalid-size', 400, 'Card size is outside the allowed limits.');
+    }
+    return { width: size.width, height: size.height };
+  }
+
   // ---- Dados iniciais --------------------------------------------------------------------------------------
 
   private seed(): void {
@@ -208,6 +220,7 @@ export class FakePlannerData extends PlannerData {
         title,
         color: DEFAULT_CARD_COLOR,
         position: { x, y },
+        size: { ...CARD_SIZE.default },
         layer: 0,
         properties: {},
         ...timestamps(),

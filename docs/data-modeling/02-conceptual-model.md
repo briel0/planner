@@ -9,7 +9,7 @@ there are no tables, columns or types here — those are decided in the logical 
 |---|---|---|
 | **User** | name, email | email |
 | **Category** | name, order | name + owning user (name unique per user) |
-| **Card** | title, color, position (x, y) *composite*, layer, content *optional*, properties *multivalued* | no natural one — artificial in the logical model |
+| **Card** | title, color, position (x, y) *composite*, size (width, height) *composite*, layer, content *optional*, properties *multivalued* | no natural one — artificial in the logical model |
 
 All entities also record when they were created and last updated.
 
@@ -19,7 +19,7 @@ All entities also record when they were created and last updated.
 - **Properties** is a multivalued attribute: a set of (property, value) pairs taken from the system's catalog.
 - **Board** is not an entity: it has no attributes of its own; it is how the direct children of a category or card are displayed.
 - **Content** is a simple attribute: the database stores and reads it whole, even though it has internal structure (Tiptap blocks).
-- **Color, position and layer** are presentation attributes; the others are domain attributes.
+- **Color, position, size and layer** are presentation attributes; the others are domain attributes.
 - **Content vs. properties:** material you read (text, tables, images) is content; information you filter
   or query by (due date, done) is a property.
 
@@ -60,6 +60,7 @@ flowchart LR
     k1(["title"]) --- K
     k2(["color"]) --- K
     k3(["position: x, y"]) --- K
+    k7(["size: width, height"]) --- K
     k4(["layer"]) --- K
     k5(["content?"]) --- K
     k6(["properties (multivalued)"]) --- K

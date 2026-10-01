@@ -58,7 +58,8 @@ Rejected:
   (over-fetching), while `GET /cards/{id}` returns the card with its content in one request (no
   under-fetching). Create and update responses return the full representation.
 - **Representations are shaped for clients, not copied from tables.** Example: a card's position is
-  `{ "x": 120.5, "y": 80 }`, although the database splits it into two columns.
+  `{ "x": 120.5, "y": 80 }` and its size `{ "width": 208, "height": 64 }`, although the database splits each
+  into two columns.
 - **References to parents are always included** (`categoryId`, `parentId`), so results of cross-cutting
   queries can tell where each resource lives.
 - **Instants** use ISO 8601 in UTC (`2026-09-28T03:12:45Z`); **calendar days** use `YYYY-MM-DD`.
@@ -73,6 +74,7 @@ Example — a card summary:
   "title": "Lista 3",
   "color": "#3b82f6",
   "position": { "x": 120.5, "y": 80 },
+  "size": { "width": 208, "height": 64 },
   "layer": 2,
   "properties": { "dueOn": "2026-09-30", "done": false },
   "childCount": 2,

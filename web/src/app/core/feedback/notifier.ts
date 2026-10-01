@@ -9,6 +9,7 @@ const MESSAGES: Record<string, string> = {
   'card.invalid-title': 'O título do cartão precisa ter entre 1 e 200 caracteres.',
   'card.invalid-color': 'Cor inválida.',
   'card.invalid-position': 'Posição inválida.',
+  'card.invalid-size': 'Tamanho fora dos limites permitidos.',
   'card.cycle': 'Não é possível colocar um cartão dentro dele mesmo.',
   'not-found': 'Esse item não existe mais.',
 };

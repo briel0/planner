@@ -33,6 +33,12 @@ internal sealed class CardConfiguration : IEntityTypeConfiguration<Card> {
             position.Property(p => p.Y).HasColumnName("position_y");
         });
 
+        // Size (objeto de valor) ↔ duas colunas. O valor padrão vale para os cartões que já existiam.
+        builder.ComplexProperty(c => c.Size, size => {
+            size.Property(s => s.Width).HasColumnName("width").HasDefaultValue(Size.Default.Width);
+            size.Property(s => s.Height).HasColumnName("height").HasDefaultValue(Size.Default.Height);
+        });
+
         builder.Property(c => c.Content).HasColumnType("jsonb");
 
         // CardProperties (objeto de valor) ↔ uma coluna JSONB, ex.: {"due_on": "2026-09-30", "done": false}.
@@ -49,6 +55,9 @@ internal sealed class CardConfiguration : IEntityTypeConfiguration<Card> {
         builder.ToTable(table => {
             table.HasCheckConstraint("ck_cards_title", Checks.RequiredText("title", Card.TitleMaxLength));
             table.HasCheckConstraint("ck_cards_color", "color ~ '^#[0-9a-f]{6}$'");
+            table.HasCheckConstraint(
+                "ck_cards_size",
+                $"width BETWEEN {Size.MinWidth} AND {Size.MaxWidth} AND height BETWEEN {Size.MinHeight} AND {Size.MaxHeight}");
             table.HasCheckConstraint("ck_cards_content", "content IS NULL OR jsonb_typeof(content) = 'object'");
             table.HasCheckConstraint("ck_cards_properties", "jsonb_typeof(properties) = 'object'");
         });

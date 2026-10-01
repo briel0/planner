@@ -18,6 +18,7 @@ public sealed partial class Card {
         Title = title;
         Color = DefaultColor;
         Position = Position.Origin;
+        Size = Size.Default;
         Properties = CardProperties.None;
     }
 
@@ -35,6 +36,8 @@ public sealed partial class Card {
     public string Color { get; private set; }
 
     public Position Position { get; private set; }
+
+    public Size Size { get; private set; }
 
     /// <summary>Ordem de sobreposição no quadro: maior fica na frente.</summary>
     public int Layer { get; private set; }
@@ -64,6 +67,11 @@ public sealed partial class Card {
     }
 
     public void MoveTo(Position position) => Position = position;
+
+    public void Resize(Size size) {
+        ArgumentNullException.ThrowIfNull(size);
+        Size = size;
+    }
 
     public void ChangeLayer(int layer) => Layer = layer;
 

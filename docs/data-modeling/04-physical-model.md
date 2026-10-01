@@ -26,6 +26,8 @@ version with native `uuidv7()`.
 | | `color` | `text` | no | `'#e5e7eb'` | free color, `#rrggbb` lowercase hex |
 | | `position_x` | `double precision` | no | `0` | |
 | | `position_y` | `double precision` | no | `0` | |
+| | `width` | `double precision` | no | `208` | 120–1200, in canvas pixels |
+| | `height` | `double precision` | no | `64` | 48–900, in canvas pixels |
 | | `layer` | `integer` | no | `0` | higher is in front, within the same board |
 | | `content` | `jsonb` | yes | | Tiptap document |
 | | `properties` | `jsonb` | no | `'{}'` | property catalog values |
@@ -36,7 +38,8 @@ version with native `uuidv7()`.
 
 - **`text` + length `CHECK` instead of `varchar(n)`:** same performance in PostgreSQL; the limit becomes an
   explicit, easily changed rule. The same checks forbid empty or whitespace-only names and titles.
-- **`double precision` for positions:** the canvas zooms, so cards can sit at fractional coordinates.
+- **`double precision` for positions and sizes:** the canvas zooms, so cards can sit at fractional coordinates and have fractional sizes.
+- **Size limits (120×48 to 1200×900):** below the minimum a short title no longer fits; above the maximum one card would hide most of the board. The defaults (208×64) are the size cards had before they could be resized.
 - **`integer` for `sort_order` and `layer`:** "bring to front" is the board's max layer + 1; reordering tabs
   renumbers a user's few categories. Fractional ordering schemes would add complexity with no gain here.
 - **`timestamptz` for instants:** stores an absolute moment (normalized to UTC) and converts to the reader's
@@ -89,6 +92,7 @@ version with native `uuidv7()`.
   (`x = btrim(x)`), within the length limits in the types table.
 - `users.email`: at most 254 characters.
 - `cards.color`: matches `^#[0-9a-f]{6}$`.
+- `cards.width` between 120 and 1200, `cards.height` between 48 and 900.
 - `cards.properties`: always a JSON object (`jsonb_typeof(properties) = 'object'`).
 - `cards.content`: null or a JSON object.
 

@@ -1,6 +1,7 @@
-import { Component, ElementRef, computed, effect, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, effect, input, output, signal, viewChild } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
-import { Card } from '../../../core/data/models';
+import { clampSize } from '../../../core/data/card-size';
+import { Card, Size } from '../../../core/data/models';
 import { readableTextColor } from '../../../shared/ui/color/readable-text-color';
 
 /** Uma ação de teclado pedida sobre o cartão (esquema "explorador de arquivos"). */
@@ -21,6 +22,9 @@ export type CardKeyAction = 'open' | 'rename' | 'delete';
     '[class.done]': 'card().properties.done === true',
     '[class.light-text]': "textColor() === 'light'",
     '[style.background-color]': 'card().color',
+    '[style.width.px]': 'size().width',
+    '[style.height.px]': 'size().height',
+    '[class.resizing]': 'liveSize() !== null',
     '(click)': 'onClick($event)',
     '(dblclick)': 'onDoubleClick($event)',
     '(contextmenu)': 'onContextMenu($event)',
@@ -37,6 +41,11 @@ export class CardView {
   readonly menuRequested = output<MouseEvent>();
   readonly renamed = output<string>();
   readonly renameCancelled = output<void>();
+  readonly resized = output<Size>();
+
+  /** Tamanho durante o redimensionamento (antes de soltar); nulo no resto do tempo. */
+  protected readonly liveSize = signal<Size | null>(null);
+  protected readonly size = computed(() => this.liveSize() ?? this.card().size);
 
   protected readonly textColor = computed(() => readableTextColor(this.card().color));
   protected readonly due = computed(() => describeDue(this.card().properties.dueOn, this.card().properties.done));
@@ -79,6 +88,36 @@ export class CardView {
       event.preventDefault();
       this.keyAction.emit(action);
     }
+  }
+
+  /**
+   * Arrastar o canto inferior direito redimensiona. O cartão muda de tamanho enquanto o ponteiro se move, e o
+   * tamanho final só é avisado (e salvo) ao soltar.
+   */
+  protected startResize(event: PointerEvent): void {
+    event.preventDefault(); // impede o arrastar do cartão inteiro
+    event.stopPropagation();
+    const handle = event.currentTarget as HTMLElement;
+    const start = { x: event.clientX, y: event.clientY, ...this.card().size };
+    handle.setPointerCapture(event.pointerId);
+
+    const move = (e: PointerEvent) =>
+      this.liveSize.set(
+        clampSize({ width: start.width + e.clientX - start.x, height: start.height + e.clientY - start.y }),
+      );
+    const end = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', end);
+      handle.removeEventListener('pointercancel', end);
+      const size = this.liveSize();
+      if (size && (size.width !== start.width || size.height !== start.height)) {
+        this.resized.emit(size);
+      }
+      this.liveSize.set(null);
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', end);
+    handle.addEventListener('pointercancel', end);
   }
 
   protected commit(value: string): void {

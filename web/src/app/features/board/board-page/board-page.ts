@@ -5,7 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { Router, RouterLink } from '@angular/router';
-import { Card, Position } from '../../../core/data/models';
+import { Card, Position, Size } from '../../../core/data/models';
 import { Notifier } from '../../../core/feedback/notifier';
 import { confirmAction } from '../../../shared/ui/confirm-dialog/confirm-dialog';
 import { CategoriesStore } from '../../categories/categories-store';
@@ -125,6 +125,10 @@ export class BoardPage {
     if (position.x !== card.position.x || position.y !== card.position.y) {
       await this.run(() => this.store.move(card.id, position));
     }
+  }
+
+  protected async onResized(card: Card, size: Size): Promise<void> {
+    await this.run(() => this.store.resize(card.id, size));
   }
 
   // ---- Menu do botão direito -------------------------------------------------------------------------------

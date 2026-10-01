@@ -50,6 +50,7 @@
             (menuRequested)="openMenu(card, $event)"
             (renamed)="onRenamed(card, $event)"
             (renameCancelled)="cancelRename()"
+            (resized)="onResized(card, $event)"
           />
         }
         @if (store.status() === 'ready' && store.cards().length === 0) {

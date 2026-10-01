@@ -17,6 +17,7 @@ public class DatabaseRulesTests(PostgresFixture postgres) : IClassFixture<Postgr
         var card = Card.Create(category.Id, "Lista 3");
         card.ChangeColor("#3B82F6");
         card.MoveTo(new Position(120.5, -80));
+        card.Resize(new Size(300.5, 120));
         card.ChangeContent("""{"type": "doc", "content": []}""");
         card.ChangeProperties(new CardProperties(DueOn: new DateOnly(2026, 9, 30)));
         await SaveAsync(card);
@@ -25,6 +26,7 @@ public class DatabaseRulesTests(PostgresFixture postgres) : IClassFixture<Postgr
         var loaded = await db.Cards.SingleAsync(c => c.Id == card.Id, Ct);
         Assert.Equal("#3b82f6", loaded.Color);
         Assert.Equal(new Position(120.5, -80), loaded.Position);
+        Assert.Equal(new Size(300.5, 120), loaded.Size);
         Assert.Equal(new CardProperties(DueOn: new DateOnly(2026, 9, 30)), loaded.Properties);
         Assert.NotNull(loaded.Content);
 
@@ -146,6 +148,20 @@ public class DatabaseRulesTests(PostgresFixture postgres) : IClassFixture<Postgr
 
         Assert.Equal(PostgresErrorCodes.CheckViolation, error.SqlState);
         Assert.Equal("ck_cards_color", error.ConstraintName);
+    }
+
+    [Fact]
+    public async Task Size_outside_the_limits_is_rejected_by_the_database() {
+        var category = await CreateCategoryAsync();
+        var card = Card.Create(category.Id, "Lista 3");
+        await SaveAsync(card);
+
+        await using var db = postgres.NewContext();
+        var error = await Assert.ThrowsAsync<PostgresException>(() => db.Database.ExecuteSqlAsync(
+            $"UPDATE cards SET width = {50} WHERE id = {card.Id}", Ct));
+
+        Assert.Equal(PostgresErrorCodes.CheckViolation, error.SqlState);
+        Assert.Equal("ck_cards_size", error.ConstraintName);
     }
 
     private async Task<Category> CreateCategoryAsync(string name = "Faculdade") {

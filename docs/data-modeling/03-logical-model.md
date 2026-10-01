@@ -10,7 +10,7 @@ details (exact types, indexes), which belong to the physical model.
 |---|---|
 | Entity | Table |
 | Simple attribute | Column |
-| Composite attribute (position: x, y) | One column per part (`position_x`, `position_y`) |
+| Composite attribute (position: x, y; size: width, height) | One column per part (`position_x`, `position_y`, `width`, `height`) |
 | 1:N relationship | Foreign key on the N side |
 | 1:N self-relationship | Foreign key to the same table, nullable for roots (`parent_id`) |
 | Multivalued attribute (properties) | See "Card properties" |
@@ -96,6 +96,8 @@ cards
   color
   position_x
   position_y
+  width
+  height
   layer
   content       (optional; Tiptap JSON document)
   properties    (JSON object; empty object when the card has no properties)
@@ -108,7 +110,7 @@ cards
 A **functional dependency** `A → B` means that knowing `A` determines `B` unambiguously. Normal forms
 check that every column depends on the key, the whole key, and nothing but the key.
 
-- **1NF — one value per cell.** Position is split into `position_x` and `position_y`. `content` is treated
+- **1NF — one value per cell.** Position and size are split into one column per part. `content` is treated
   by the database as a single value: stored and read whole, never queried inside.
   **Exception:** `properties` is a multivalued attribute stored in one column and *is* queried inside. This
   is a deliberate deviation, justified by the flexibility of the catalog and supported natively by
