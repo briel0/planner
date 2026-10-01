@@ -27,6 +27,27 @@ Infrastructure ─►  Application
 Tests mirror the projects (`Planner.Domain.Tests`, ...). The domain is tested with plain objects: no
 database, no HTTP.
 
+## Data access
+
+The Application declares what it needs as interfaces; the Infrastructure implements them with EF Core; the Api
+wires them with dependency injection. The Application never references EF Core.
+
+- **Repositories (writes):** one per aggregate (`ICategoryRepository`, `ICardRepository`). They load and add
+  **domain entities**, so use cases apply the domain rules (`category.Rename(...)`). Queries a rule depends on get
+  an intention-revealing name (`NameTakenAsync`) and are written once.
+- **Queries (reads):** one per aggregate (`ICategoryQueries`, `ICardQueries`). They project straight from the
+  database into **read models** — the shapes the API returns, including database-only data such as `createdAt` and
+  `updatedAt`. Reads skip the domain entirely: no rules apply to reading.
+- **Unit of work:** a single `IUnitOfWork.SaveChangesAsync`, so a use case saves all its changes in one transaction
+  (EF Core's `DbContext` is already a unit of work; the interface only hides it).
+- **Mapping is manual:** read models are built in the query projections; no mapping library.
+- Use cases that change data reload the result through the queries, so responses always reflect the database
+  (including timestamps set by triggers).
+
+Rejected — an `IPlannerDbContext` interface exposing `DbSet`s to the Application: less code, but the Application
+would depend on EF Core, and queries (with database details such as shadow timestamp columns and JSON properties)
+would spread and repeat across use cases.
+
 ## Rich domain model
 
 - Entities **encapsulate** their data: properties have public getters and private setters.

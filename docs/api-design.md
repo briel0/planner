@@ -8,6 +8,15 @@ This document defines the **conventions** every endpoint follows. It does not li
 list is the **OpenAPI specification generated from the code**. Paths below are examples that illustrate
 the conventions, not a promise that those endpoints exist.
 
+## Base path and origin
+
+- **Every endpoint lives under `/api`** (`GET /api/categories`, `PATCH /api/cards/{id}`). Paths elsewhere in this
+  document omit the prefix for brevity. The prefix keeps API paths apart from the web app's own routes (such as
+  `/categories/:id`), which share the same origin.
+- **The web app and the API share one origin**, so browsers need no CORS: in development the Angular dev server
+  proxies `/api/*` to the API; in production a reverse proxy does the same on a single domain. Non-browser clients
+  (scripts, agents) call the API directly.
+
 ## Style
 
 - **REST, resource-oriented:** paths are nouns (`/cards`), HTTP methods are the verbs. No verbs in paths
@@ -47,6 +56,9 @@ Rejected:
 
 - **The user is implicit:** no path contains a user id. Every request is made on behalf of the authenticated
   caller, and a collection like `/categories` always means "mine".
+- **Every endpoint requires authentication.** Until Google sign-in exists, a development-only authentication
+  scheme signs every request in as the seeded development user; the API refuses to start with it outside the
+  Development environment.
 - **Other users' resources answer `404 Not Found`**, not `403 Forbidden`, so their existence is never
   revealed.
 
@@ -91,6 +103,28 @@ Card-specific fields:
   as `{ "id", "title" }`. Clients build the navigation trail (category › card › card) from it in one request.
 
 Not now — **field selection** (`?include=content`, GraphQL-style queries): no client needs it yet.
+
+## Creating resources
+
+- **The client generates the id.** `POST` bodies carry the new resource's `id`, a **UUID version 7** (time-ordered,
+  keeping database indexes efficient); other versions are rejected with `400`.
+- **Creation is idempotent.** Repeating a `POST` with an id that already exists for the same user returns the
+  existing resource (`200 OK`) instead of creating a duplicate — so clients can safely retry after a network
+  failure. A brand-new resource answers `201 Created` with a `Location` header.
+- Clients may show the new resource before the response arrives, since they already know its id.
+
+## Concurrency
+
+Optimistic and **opt-in**, with standard HTTP conditional requests:
+
+- Every representation carries a **`version`** (an opaque string), and single-item responses also send it as the
+  **`ETag`** header. It changes whenever the resource changes.
+- A `PATCH` or `DELETE` may send **`If-Match: <version>`**: the change is applied only if the resource is still at
+  that version; otherwise the API answers **`412 Precondition Failed`** (`code: "concurrency.stale"`), and the
+  client should reload before retrying.
+- Without `If-Match`, the last write wins, field by field (a `PATCH` only touches the fields it sends).
+- Clients send `If-Match` where overwriting would lose work (the Angular app: titles and descriptions), and skip it
+  for quick canvas gestures (moving, resizing, colors).
 
 ## Errors
 
