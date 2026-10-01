@@ -41,6 +41,9 @@ version with native `uuidv7()`.
   renumbers a user's few categories. Fractional ordering schemes would add complexity with no gain here.
 - **`timestamptz` for instants:** stores an absolute moment (normalized to UTC) and converts to the reader's
   time zone. Plain `timestamp` has no time zone and cannot be compared safely across services.
+- **Absent properties are not stored:** a card without a due date has no `due_on` key at all (not
+  `"due_on": null`), so a note's properties are `{}` and the partial `due_on` index only holds cards that
+  have a deadline.
 - **`due_on` is a calendar day, not an instant:** stored in `properties` as `YYYY-MM-DD`, with no time or
   time zone. "Due on the 30th" means the 30th wherever the user is.
 - **`jsonb` instead of `json`:** a binary format PostgreSQL can query and index; `json` only keeps the raw text.
@@ -69,6 +72,10 @@ version with native `uuidv7()`.
   (default `MATCH SIMPLE`), which is exactly the root-card case.
 - `ON UPDATE CASCADE` on that key means moving a tree to another category only requires changing the root's
   `category_id`; the change propagates down to every descendant.
+- **Implementation note:** a plain `parent_id → cards (id)` foreign key (on delete cascade) also exists. It is
+  redundant with the composite key, but EF Core needs it to save parents before children. The composite key
+  itself cannot be declared in EF Core, because EF Core forbids changing alternate-key values and a card's
+  category does change; it is created with hand-written SQL in the migration.
 
 ### Uniqueness
 

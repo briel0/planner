@@ -45,3 +45,7 @@ dotnet_diagnostic.IDE0055.severity = warning
 [api/tests/**.cs]
 # Nomes de teste descrevem o comportamento com '_' (ChangeColor_normalizes_to_lowercase)
 dotnet_diagnostic.CA1707.severity = none
+
+[api/src/Planner.Infrastructure/Persistence/Migrations/**.cs]
+# Código gerado pelo EF Core: fora das regras de estilo e dos analisadores
+generated_code = true

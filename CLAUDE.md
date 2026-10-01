@@ -3,7 +3,7 @@
 Planner organizado em categorias, com cartões em quadros de canvas livre; cada cartão abre seu próprio quadro, no estilo Notion.
 Os dados precisam ser consumíveis por outros clientes no futuro (scripts, agentes de IA etc.), não só pela UI.
 
-> Status: stack, modelagem (`docs/data-modeling/`), convenções da API e arquitetura decididas. Domínio (`Card`, `Category`, `User`) implementado e testado; próximo passo: persistência (Docker + Postgres + EF Core).
+> Status: stack, modelagem (`docs/data-modeling/`), convenções da API e arquitetura decididas. Domínio (`Card`, `Category`, `User`) e persistência (EF Core + Postgres, primeira migration aplicada) implementados e testados; próximo passo: os primeiros casos de uso e endpoints.
 
 ## Visão do produto
 
@@ -34,7 +34,8 @@ Os dados precisam ser consumíveis por outros clientes no futuro (scripts, agent
 - **Lint e formatação do backend:** ferramentas nativas do .NET. `.editorconfig` na raiz (estilo inspirado no `.clang-format` do sumo-sdk: chaves na mesma linha, `else` na linha seguinte, `if(` sem espaço, 4 espaços, 120 colunas); `api/Directory.Build.props` liga nullable, analisadores `latest-recommended`, estilo verificado no build e avisos como erros.
 - **Testes: xUnit v3** com o `Assert` nativo, em `api/tests/` espelhando os projetos (`Planner.Domain.Tests` primeiro). Testa-se o que tem regra e pode quebrar — cada invariante do domínio e cada bug corrigido —, não código trivial (getters, construtores sem lógica); cobertura não é meta. TDD no domínio.
 - **Configuração e segredos:** segredos nunca vão para o Git. Docker Compose lê a senha do Postgres de `.env` (ignorado; modelo em `.env.example`); a API, em desenvolvimento, lê a string de conexão `ConnectionStrings:Planner` do User Secrets; em produção, de variáveis de ambiente. O Postgres só escuta em `127.0.0.1`.
-- **Acesso ao banco: Entity Framework Core** com o provedor `Npgsql.EntityFrameworkCore.PostgreSQL`. Consultas em LINQ; migrations geradas pelo EF Core; SQL manual só em casos pontuais de desempenho.
+- **Acesso ao banco: Entity Framework Core** com o provedor `Npgsql.EntityFrameworkCore.PostgreSQL`. Consultas em LINQ; migrations geradas pelo EF Core; SQL manual só em casos pontuais de desempenho. Mapeamento em `Planner.Infrastructure/Persistence/` (um arquivo de configuração por entidade, nomes em `snake_case` via `EFCore.NamingConventions`, sem índices automáticos em FKs). O que o EF Core não gera (FK composta, índices de expressão/parciais, triggers) é SQL escrito à mão dentro da migration.
+- **Testes de integração:** `Planner.Infrastructure.IntegrationTests`, com Testcontainers (Postgres 18 descartável, migrations aplicadas). Testam as regras que só o banco garante.
 - **Editor do conteúdo do cartão: Tiptap** (sobre ProseMirror), via `ngx-tiptap`. Conteúdo salvo como JSON do Tiptap (JSONB no Postgres). UI dos blocos (menu `/`, alça de arrastar) construída em componentes Angular. v1 só com parágrafo, título, lista e checklist.
 - **API: REST com aninhamento raso.** `docs/api-design.md` define as **convenções** que todo endpoint segue; os endpoints são criados conforme a necessidade, e a lista oficial é o OpenAPI gerado pelo código.
 - **Contrato: OpenAPI.** A API em .NET publica a especificação OpenAPI; o cliente TypeScript do Angular é gerado a partir dela (nunca escrito à mão). Outros serviços do ecossistema fazem o mesmo em suas linguagens.
@@ -51,7 +52,7 @@ planner/
 ├── docs/api-design.md   # convenções da API (estilo, rotas, representações, erros)
 ├── docs/backend-architecture.md  # camadas, regra da dependência, domínio rico
 ├── .editorconfig        # estilo de código (lido pelos editores e pelo dotnet format)
-├── api/                 # ASP.NET Core: Planner.slnx, global.json, Directory.*.props, src/Planner.{Domain,Application,Infrastructure,Api}, tests/Planner.Domain.Tests
+├── api/                 # ASP.NET Core: Planner.slnx, global.json, Directory.*.props, src/Planner.{Domain,Application,Infrastructure,Api}, tests/Planner.{Domain.Tests,Infrastructure.IntegrationTests}
 └── web/                 # Angular (src/app/api/ = cliente gerado do OpenAPI, não editar à mão)
 ```
 
@@ -69,12 +70,15 @@ Outras ferramentas do ecossistema vivem em repositórios próprios e consomem o 
 
 1. `cp .env.example .env` e preencher `POSTGRES_PASSWORD` (ex.: `openssl rand -hex 24`).
 2. `docker compose up -d --wait` (na raiz) sobe o Postgres.
-3. Em `api/`: `dotnet user-secrets set "ConnectionStrings:Planner" "Host=localhost;Port=5432;Database=planner;Username=planner;Password=<a mesma senha>" --project src/Planner.Api`.
+3. Em `api/`: `dotnet tool restore` (instala o `dotnet-ef` na versão do projeto).
+4. Em `api/`: `dotnet user-secrets set "ConnectionStrings:Planner" "Host=localhost;Port=5432;Database=planner;Username=planner;Password=<a mesma senha>" --project src/Planner.Api`.
 
 ## Comandos (backend, dentro de `api/`)
 
 - `dotnet build` — compila; qualquer aviso (incluindo formatação e nulos) quebra o build.
-- `dotnet test` — roda os testes (xUnit v3 sobre a Microsoft.Testing.Platform, ativada em `api/global.json`).
+- `dotnet test` — roda os testes (xUnit v3 sobre a Microsoft.Testing.Platform, ativada em `api/global.json`). Os de integração precisam do Docker rodando.
+- `dotnet ef migrations add <Nome> --project src/Planner.Infrastructure --output-dir Persistence/Migrations` — gera uma migration a partir do mapeamento (revisar o SQL com `dotnet ef migrations script` antes de aplicar).
+- `dotnet ef database update --project src/Planner.Infrastructure --connection "<string de conexão>"` — aplica as migrations pendentes.
 - `dotnet format` — corrige a formatação automaticamente; `dotnet format --verify-no-changes` só verifica.
 - Versões de pacotes NuGet ficam só em `api/Directory.Packages.props` (os `.csproj` referenciam sem versão).
 
@@ -87,7 +91,6 @@ O projeto deve seguir as práticas mais profissionais possíveis. Estas decisõe
 | Ativar o Ubuntu Pro (gratuito para uso pessoal; estende as atualizações de segurança do 20.04 até 2030) | o quanto antes — não bloqueia o código |
 | Atualizar o Ubuntu 20.04 → 24.04 (liberar espaço em disco antes: ~17 GB livres) | hospedar o app, ou alguma ferramenta deixar de funcionar no 20.04 |
 | Lint e formatação do Angular (ESLint, Prettier) | criar o projeto `web/` |
-| Testes de integração com Postgres real (Testcontainers, projeto `Planner.Api.IntegrationTests`) | subir o Postgres pela primeira vez (precisa de Docker) |
 | Como a Application acessa a persistência (interfaces de repositório por agregado ou uma interface sobre o `DbContext`) e como mapear entidades ↔ DTOs | o primeiro caso de uso |
 | "Usuário atual" em desenvolvimento (usuário fixo/semeado até existir autenticação) | o primeiro endpoint que depende do usuário |
 | Paginação de listas | um endpoint de lista que possa crescer sem limite (ex.: consultas por prazo) |
@@ -100,7 +103,7 @@ O projeto deve seguir as práticas mais profissionais possíveis. Estas decisõe
 | Logs e observabilidade (logs estruturados, correlação de pedidos) | a API rodar fora da máquina de desenvolvimento |
 | Backup do banco | existirem dados reais que não podem ser perdidos |
 | Versionamento da API | o primeiro cliente além do Angular depender da API |
-| Autenticação e autorização | o app ir para a internet (ou o primeiro cliente externo) |
+| Autenticação e autorização. **Requisito já definido: login com a conta do Google** (OpenID Connect). Impacto previsto na modelagem: identificar o usuário pelo id da conta no provedor (não só pelo e-mail), talvez numa tabela de logins externos para permitir outros provedores depois | o app ir para a internet (ou o primeiro cliente externo) |
 | Hospedagem, domínio e HTTPS (candidato: VPS com o mesmo Docker Compose; conferir Azure for Students e GitHub Student Developer Pack) | o app ir para a internet |
 | Rate limiting (limite de pedidos por cliente) | o app ir para a internet |
 | Armazenamento de arquivos de imagem | o conteúdo dos cards aceitar imagens |
