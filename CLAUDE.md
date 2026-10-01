@@ -57,7 +57,7 @@ Caminho: **fase 1** — front Angular com dados falsos em memória, já no forma
 - **Idempotência de criação:** o cliente gera o id (UUID v7) e o envia no `POST`; repetir o pedido com o mesmo id devolve o recurso já criado em vez de duplicá-lo. O servidor recusa ids que não sejam UUID v7. No front, o id vem do pacote `uuid` (MIT; conferir a versão ao instalar), o que também permite mostrar o item novo antes da resposta.
 - **Concorrência otimista opcional:** a versão de cada linha é a coluna de sistema `xmin` do Postgres (muda a cada alteração; o EF Core a usa como token de concorrência, sem coluna nova). A API expõe a versão (`version` nas representações, `ETag` nas respostas de item) e respeita `If-Match` quando enviado (`412` se a versão mudou); sem `If-Match`, vale a última gravação, campo a campo. O Angular envia `If-Match` só ao salvar texto (título e descrição).
 - **Acesso ao banco: Entity Framework Core** com o provedor `Npgsql.EntityFrameworkCore.PostgreSQL`. Consultas em LINQ; migrations geradas pelo EF Core; SQL manual só em casos pontuais de desempenho. Mapeamento em `Planner.Infrastructure/Persistence/` (um arquivo de configuração por entidade, nomes em `snake_case` via `EFCore.NamingConventions`, sem índices automáticos em FKs). O que o EF Core não gera (FK composta, índices de expressão/parciais, triggers) é SQL escrito à mão dentro da migration.
-- **Testes de integração:** `Planner.Infrastructure.IntegrationTests`, com Testcontainers (Postgres 18 descartável, migrations aplicadas). Testam as regras que só o banco garante.
+- **Testes de integração:** `Planner.IntegrationTests`, com Testcontainers (um Postgres 18 descartável, migrations aplicadas, compartilhado por todos os testes para poupar memória) e a API de verdade em memória (`WebApplicationFactory`). Testam as regras que só o banco garante e os endpoints de ponta a ponta.
 - **Projeto Angular (`web/`):** Angular 22, standalone, `strict`, sem zone.js (zoneless), com rotas, sem SSR; testes com Vitest.
 - **Lint e formatação do front:** ESLint (angular-eslint, regras recomendadas + acessibilidade de templates) e Prettier, no padrão do ecossistema TypeScript (`if (`, `} else {`), 2 espaços e 120 colunas. O estilo do sumo-sdk vale só para o C#.
 - **Estilos: SCSS.**
@@ -81,7 +81,7 @@ planner/
 ├── docs/api-design.md   # convenções da API (estilo, rotas, representações, erros)
 ├── docs/backend-architecture.md  # camadas, regra da dependência, domínio rico
 ├── .editorconfig        # estilo de código (lido pelos editores e pelo dotnet format)
-├── api/                 # ASP.NET Core: Planner.slnx, global.json, Directory.*.props, src/Planner.{Domain,Application,Infrastructure,Api}, tests/Planner.{Domain.Tests,Infrastructure.IntegrationTests}
+├── api/                 # ASP.NET Core: Planner.slnx, global.json, Directory.*.props, src/Planner.{Domain,Application,Infrastructure,Api}, tests/Planner.{Domain.Tests,IntegrationTests}
 └── web/                 # Angular 22 (src/app/api/ = cliente gerado do OpenAPI, não editar à mão)
 ```
 
@@ -110,6 +110,7 @@ Outras ferramentas do ecossistema vivem em repositórios próprios e consomem o 
 - `dotnet test` — roda os testes (xUnit v3 sobre a Microsoft.Testing.Platform, ativada em `api/global.json`). Os de integração precisam do Docker rodando.
 - `dotnet ef migrations add <Nome> --project src/Planner.Infrastructure --output-dir Persistence/Migrations` — gera uma migration a partir do mapeamento (revisar o SQL com `dotnet ef migrations script` antes de aplicar).
 - `dotnet ef database update --project src/Planner.Infrastructure --connection "<string de conexão>"` — aplica as migrations pendentes.
+- `dotnet run --project src/Planner.Api` — sobe a API (ambiente Development, autenticada como o usuário dev). O build também regrava `api/openapi/planner.json`, o contrato da API.
 - `dotnet format` — corrige a formatação automaticamente; `dotnet format --verify-no-changes` só verifica.
 - Versões de pacotes NuGet ficam só em `api/Directory.Packages.props` (os `.csproj` referenciam sem versão).
 

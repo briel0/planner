@@ -23,8 +23,9 @@ public sealed class Category {
     /// <summary>Posição da aba no rodapé (menor vem antes).</summary>
     public int SortOrder { get; private set; }
 
-    public static Category Create(Guid userId, string name, int sortOrder) =>
-        new(Guid.CreateVersion7(), userId, NormalizeName(name), sortOrder);
+    /// <param name="id">Escolhido pelo cliente (UUID v7), o que torna a criação idempotente.</param>
+    public static Category Create(Guid id, Guid userId, string name, int sortOrder) =>
+        new(EntityId.Require(id), userId, NormalizeName(name), sortOrder);
 
     public void Rename(string name) => Name = NormalizeName(name);
 

@@ -12,4 +12,13 @@ internal static class Timestamps {
         builder.Property<DateTimeOffset>("CreatedAt").HasDefaultValueSql("now()").ValueGeneratedOnAdd();
         builder.Property<DateTimeOffset>("UpdatedAt").HasDefaultValueSql("now()").ValueGeneratedOnAddOrUpdate();
     }
+
+    /// <summary>
+    /// Versão da linha para concorrência otimista: a coluna de sistema <c>xmin</c> do Postgres, que muda a cada
+    /// alteração. O EF Core a confere em cada UPDATE/DELETE (WHERE xmin = versão lida) e não cria coluna nenhuma.
+    /// </summary>
+    public static void HasVersion<TEntity>(this EntityTypeBuilder<TEntity> builder) where TEntity : class =>
+        builder.Property<uint>(VersionProperty).HasColumnName("xmin").IsRowVersion();
+
+    public const string VersionProperty = "Version";
 }

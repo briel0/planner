@@ -5,10 +5,11 @@ using Planner.Domain.Categories;
 using Planner.Domain.Users;
 using Planner.Infrastructure.Persistence;
 
-namespace Planner.Infrastructure.IntegrationTests.Persistence;
+namespace Planner.IntegrationTests.Persistence;
 
 /// <summary>Regras que só o banco garante (docs/data-modeling/04-physical-model.md), testadas num Postgres real.</summary>
-public class DatabaseRulesTests(PostgresFixture postgres) : IClassFixture<PostgresFixture> {
+[Collection(nameof(PlannerTestGroup))]
+public class DatabaseRulesTests(PlannerFixture postgres) {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -40,7 +41,7 @@ public class DatabaseRulesTests(PostgresFixture postgres) : IClassFixture<Postgr
     [Fact]
     public async Task Category_names_are_unique_per_user_ignoring_letter_case() {
         var first = await CreateCategoryAsync("Faculdade");
-        var duplicate = Category.Create(first.UserId, "faculdade", sortOrder: 1);
+        var duplicate = Category.Create(Guid.CreateVersion7(), first.UserId, "faculdade", sortOrder: 1);
 
         var error = await Assert.ThrowsAsync<DbUpdateException>(() => SaveAsync(duplicate));
 
@@ -166,7 +167,7 @@ public class DatabaseRulesTests(PostgresFixture postgres) : IClassFixture<Postgr
 
     private async Task<Category> CreateCategoryAsync(string name = "Faculdade") {
         var user = User.Create("Gabriel", new Email($"{Guid.NewGuid():N}@example.com"));
-        var category = Category.Create(user.Id, name, sortOrder: 0);
+        var category = Category.Create(Guid.CreateVersion7(), user.Id, name, sortOrder: 0);
         await using var db = postgres.NewContext();
         db.Users.Add(user);
         db.Categories.Add(category);

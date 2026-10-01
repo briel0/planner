@@ -19,9 +19,12 @@ public sealed class User {
 
     public Email Email { get; private set; }
 
-    public static User Create(string name, Email email) {
+    public static User Create(string name, Email email) => Create(Guid.CreateVersion7(), name, email);
+
+    /// <param name="id">Um id conhecido de antemão (UUID v7), como o do usuário de desenvolvimento.</param>
+    public static User Create(Guid id, string name, Email email) {
         ArgumentNullException.ThrowIfNull(email);
-        return new(Guid.CreateVersion7(), NormalizeName(name), email);
+        return new(EntityId.Require(id), NormalizeName(name), email);
     }
 
     public void Rename(string name) => Name = NormalizeName(name);

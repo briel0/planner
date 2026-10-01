@@ -17,6 +17,7 @@ internal sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.ToTable(table =>
             table.HasCheckConstraint("ck_categories_name", Checks.RequiredText("name", Category.NameMaxLength)));
 
+        builder.HasVersion();
         builder.HasTimestamps();
     }
 }
