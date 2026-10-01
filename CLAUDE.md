@@ -13,6 +13,19 @@ Os dados precisam ser consumíveis por outros clientes no futuro (scripts, agent
 - **Multiusuário**: cada usuário só vê os próprios dados.
 - **Dados abertos**: o planner é a primeira peça de um futuro ecossistema próprio e integrado de ferramentas. Outros serviços (de qualquer linguagem, incluindo agentes de IA) devem consumir esses dados sem passar pela UI.
 
+## MVP (objetivo atual)
+
+Dentro:
+1. Abas de categoria no rodapé: criar, renomear, reordenar, apagar.
+2. Canvas com cartões: criar, arrastar, renomear, mudar cor, apagar.
+3. Quadro recursivo: abrir um cartão mostra o quadro dele, com trilha de navegação de volta.
+4. Propriedades prazo (`dueOn`) e feito (`done`), visíveis no cartão.
+5. Um usuário fixo de desenvolvimento (sem login).
+
+Fora (depois do MVP): editor de conteúdo (Tiptap), camadas (trazer para frente/trás), login com Google, hospedagem, CI.
+
+Caminho: **fase 1** — front Angular com dados falsos em memória, já no formato de `docs/api-design.md`; **fase 2** — ligar à API uma funcionalidade por vez (cada uma com seu endpoint), levantando as decisões adiadas conforme os gatilhos.
+
 ## Princípios
 
 - **O contrato é a API, não o banco nem a UI.** Toda leitura e escrita passa por uma camada de domínio/API com schemas validados. A UI, scripts e agentes (ex.: servidor MCP) são clientes dessa camada.
@@ -36,6 +49,9 @@ Os dados precisam ser consumíveis por outros clientes no futuro (scripts, agent
 - **Configuração e segredos:** segredos nunca vão para o Git. Docker Compose lê a senha do Postgres de `.env` (ignorado; modelo em `.env.example`); a API, em desenvolvimento, lê a string de conexão `ConnectionStrings:Planner` do User Secrets; em produção, de variáveis de ambiente. O Postgres só escuta em `127.0.0.1`.
 - **Acesso ao banco: Entity Framework Core** com o provedor `Npgsql.EntityFrameworkCore.PostgreSQL`. Consultas em LINQ; migrations geradas pelo EF Core; SQL manual só em casos pontuais de desempenho. Mapeamento em `Planner.Infrastructure/Persistence/` (um arquivo de configuração por entidade, nomes em `snake_case` via `EFCore.NamingConventions`, sem índices automáticos em FKs). O que o EF Core não gera (FK composta, índices de expressão/parciais, triggers) é SQL escrito à mão dentro da migration.
 - **Testes de integração:** `Planner.Infrastructure.IntegrationTests`, com Testcontainers (Postgres 18 descartável, migrations aplicadas). Testam as regras que só o banco garante.
+- **Projeto Angular (`web/`):** Angular 22, standalone, `strict`, sem zone.js (zoneless), com rotas, sem SSR; testes com Vitest.
+- **Lint e formatação do front:** ESLint (angular-eslint, regras recomendadas + acessibilidade de templates) e Prettier, no padrão do ecossistema TypeScript (`if (`, `} else {`), 2 espaços e 120 colunas. O estilo do sumo-sdk vale só para o C#.
+- **Estilos: SCSS.**
 - **Editor do conteúdo do cartão: Tiptap** (sobre ProseMirror), via `ngx-tiptap`. Conteúdo salvo como JSON do Tiptap (JSONB no Postgres). UI dos blocos (menu `/`, alça de arrastar) construída em componentes Angular. v1 só com parágrafo, título, lista e checklist.
 - **API: REST com aninhamento raso.** `docs/api-design.md` define as **convenções** que todo endpoint segue; os endpoints são criados conforme a necessidade, e a lista oficial é o OpenAPI gerado pelo código.
 - **Contrato: OpenAPI.** A API em .NET publica a especificação OpenAPI; o cliente TypeScript do Angular é gerado a partir dela (nunca escrito à mão). Outros serviços do ecossistema fazem o mesmo em suas linguagens.
@@ -53,7 +69,7 @@ planner/
 ├── docs/backend-architecture.md  # camadas, regra da dependência, domínio rico
 ├── .editorconfig        # estilo de código (lido pelos editores e pelo dotnet format)
 ├── api/                 # ASP.NET Core: Planner.slnx, global.json, Directory.*.props, src/Planner.{Domain,Application,Infrastructure,Api}, tests/Planner.{Domain.Tests,Infrastructure.IntegrationTests}
-└── web/                 # Angular (src/app/api/ = cliente gerado do OpenAPI, não editar à mão)
+└── web/                 # Angular 22 (src/app/api/ = cliente gerado do OpenAPI, não editar à mão)
 ```
 
 Outras ferramentas do ecossistema vivem em repositórios próprios e consomem o planner apenas pela API.
@@ -82,6 +98,12 @@ Outras ferramentas do ecossistema vivem em repositórios próprios e consomem o 
 - `dotnet format` — corrige a formatação automaticamente; `dotnet format --verify-no-changes` só verifica.
 - Versões de pacotes NuGet ficam só em `api/Directory.Packages.props` (os `.csproj` referenciam sem versão).
 
+## Comandos (frontend, dentro de `web/`)
+
+- `npm start` — servidor de desenvolvimento em http://localhost:4200.
+- `npm run lint` — ESLint; `npm run format` — Prettier corrige; `npm run format:check` — só verifica.
+- `npm test -- --watch=false` — testes (Vitest); `npm run build` — build de produção.
+
 ## Decisões adiadas (não esquecer)
 
 O projeto deve seguir as práticas mais profissionais possíveis. Estas decisões foram **adiadas de propósito**, não esquecidas: cada uma tem um **gatilho**. Ao começar uma tarefa que atinja um gatilho, **levantar a decisão com o dono do projeto antes de implementar**. Ao decidir, mover o item para "Decisões tomadas" (ou para o documento correspondente em `docs/`).
@@ -90,7 +112,6 @@ O projeto deve seguir as práticas mais profissionais possíveis. Estas decisõe
 |---|---|
 | Ativar o Ubuntu Pro (gratuito para uso pessoal; estende as atualizações de segurança do 20.04 até 2030) | o quanto antes — não bloqueia o código |
 | Atualizar o Ubuntu 20.04 → 24.04 (liberar espaço em disco antes: ~17 GB livres) | hospedar o app, ou alguma ferramenta deixar de funcionar no 20.04 |
-| Lint e formatação do Angular (ESLint, Prettier) | criar o projeto `web/` |
 | Como a Application acessa a persistência (interfaces de repositório por agregado ou uma interface sobre o `DbContext`) e como mapear entidades ↔ DTOs | o primeiro caso de uso |
 | "Usuário atual" em desenvolvimento (usuário fixo/semeado até existir autenticação) | o primeiro endpoint que depende do usuário |
 | Paginação de listas | um endpoint de lista que possa crescer sem limite (ex.: consultas por prazo) |
@@ -98,7 +119,7 @@ O projeto deve seguir as práticas mais profissionais possíveis. Estas decisõe
 | Idempotência de criação (id UUID gerado pelo cliente) | o primeiro endpoint de criação (`POST`) |
 | Ferramenta de geração do cliente OpenAPI para o Angular | o Angular chamar a API pela primeira vez |
 | CORS / proxy de desenvolvimento entre Angular e API | o Angular chamar a API pela primeira vez |
-| CI no GitHub Actions (build, testes, lint a cada push/PR) | existir código com testes |
+| CI no GitHub Actions (build, testes, lint e `dotnet ef migrations has-pending-model-changes` a cada push/PR). Gatilho original (existir código com testes) já atingido; adiado pelo dono do projeto para priorizar o MVP | concluir o MVP |
 | Fluxo de branches e pull requests | existir código com CI |
 | Logs e observabilidade (logs estruturados, correlação de pedidos) | a API rodar fora da máquina de desenvolvimento |
 | Backup do banco | existirem dados reais que não podem ser perdidos |
