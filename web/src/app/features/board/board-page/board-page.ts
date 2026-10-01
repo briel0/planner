@@ -142,11 +142,20 @@ export class BoardPage {
     this.setViewport(zoomAt(this.viewport(), this.pointInArea(event), Math.exp(-event.deltaY * 0.0015)));
   }
 
-  /** Arrastar o fundo move o canvas; um clique simples no fundo tira a seleção. */
+  /**
+   * Move o canvas: arrastando o fundo com o botão esquerdo, ou arrastando em qualquer lugar (inclusive sobre um
+   * cartão) segurando a bolinha do mouse. Um clique simples no fundo tira a seleção.
+   */
   protected startPan(event: PointerEvent): void {
-    // Botões de zoom e cartões têm os próprios gestos (capturar o ponteiro aqui roubaria o clique deles).
-    if (event.button !== 0 || (event.target as HTMLElement).closest('.zoom-controls, app-card-view')) {
+    const target = event.target as HTMLElement;
+    const middleButton = event.button === 1;
+    // Botões de zoom e cartões têm os próprios gestos com o botão esquerdo (capturar o ponteiro aqui roubaria o
+    // clique deles).
+    if (!middleButton && (event.button !== 0 || target.closest('.zoom-controls, app-card-view'))) {
       return;
+    }
+    if (middleButton) {
+      event.preventDefault(); // sem a rolagem automática nem a colagem do botão do meio
     }
     const start = this.viewport().pan;
     trackPointer(event, {

@@ -261,6 +261,50 @@ export class FakePlannerData extends PlannerData {
     card(faculdade.id, fisica.id, 'Lista 3', 60, 60, { properties: { dueOn: inDays(3) } });
     card(faculdade.id, fisica.id, 'Prova 1', 320, 60, { color: '#fecaca', properties: { dueOn: inDays(10) } });
     card(faculdade.id, null, 'AED', 360, 80, { color: '#bbf7d0' });
+    // Descrição longa, para ver o comportamento ao redimensionar (o que não cabe fica cortado).
+    const text = (value: string, bold = false) => ({
+      type: 'text',
+      text: value,
+      ...(bold ? { marks: [{ type: 'bold' }] } : {}),
+    });
+    const paragraph = (...content: object[]) => ({ type: 'paragraph', content });
+    const list = (type: 'bulletList' | 'orderedList', items: string[]) => ({
+      type,
+      content: items.map((item) => ({ type: 'listItem', content: [paragraph(text(item))] })),
+    });
+    card(faculdade.id, null, 'Projeto final de AED', 640, 80, {
+      color: '#fde68a',
+      size: { width: 280, height: 180 },
+      content: {
+        type: 'doc',
+        content: [
+          paragraph(
+            text('Entrega: '),
+            text('última semana do quadrimestre', true),
+            text('. Implementar uma árvore AVL com inserção, remoção e busca, e comparar com uma BST comum.'),
+          ),
+          list('bulletList', [
+            'Ler o capítulo de árvores balanceadas',
+            'Revisar as rotações simples e duplas',
+            'Montar os casos de teste com entradas ordenadas e aleatórias',
+            'Medir o tempo para 10³, 10⁴, 10⁵ e 10⁶ elementos',
+          ]),
+          paragraph(text('Relatório', true), text(':')),
+          list('orderedList', [
+            'Introdução e motivação',
+            'Descrição das estruturas',
+            'Metodologia dos experimentos',
+            'Resultados com gráficos',
+            'Conclusão e trabalhos futuros',
+          ]),
+          paragraph(
+            text(
+              'Dúvidas para levar ao monitor: complexidade amortizada da remoção, e se vale a pena comparar com uma árvore rubro-negra também.',
+            ),
+          ),
+        ],
+      },
+    });
     card(faculdade.id, null, 'Ler capítulo 4', 220, 240, { properties: { done: true } });
     card(trabalho.id, null, 'Deploy', 80, 80, { color: '#1e3a8a', properties: { dueOn: inDays(1) } });
   }
