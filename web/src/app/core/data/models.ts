@@ -12,6 +12,8 @@ export interface Category {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
+  /** Versão para o If-Match (concorrência otimista); muda a cada alteração. */
+  version: string;
 }
 
 export interface Position {

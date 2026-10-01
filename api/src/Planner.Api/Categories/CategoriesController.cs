@@ -6,20 +6,21 @@ namespace Planner.Api.Categories;
 /// <summary>As categorias (abas do rodapé) do usuário atual.</summary>
 [ApiController]
 [Route("api/categories")]
+[Consumes("application/json")]
 [Produces("application/json")]
 public sealed class CategoriesController(CategoryUseCases categories) : ControllerBase {
     /// <summary>As categorias, na ordem das abas.</summary>
-    [HttpGet]
+    [HttpGet(Name = "ListCategories")]
     public Task<IReadOnlyList<CategoryResponse>> List(CancellationToken ct) => categories.ListAsync(ct);
 
-    [HttpGet("{id:guid}", Name = nameof(GetCategory))]
+    [HttpGet("{id:guid}", Name = "GetCategory")]
     [ProducesResponseType<CategoryResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CategoryResponse>> GetCategory(Guid id, CancellationToken ct) =>
         WithETag(await categories.GetAsync(id, ct));
 
     /// <summary>Cria uma categoria. Idempotente: repetir com o mesmo id devolve a categoria existente (200).</summary>
-    [HttpPost]
+    [HttpPost(Name = "CreateCategory")]
     [ProducesResponseType<CategoryResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<CategoryResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
@@ -27,27 +28,31 @@ public sealed class CategoriesController(CategoryUseCases categories) : Controll
     public async Task<ActionResult<CategoryResponse>> Create(CreateCategoryRequest request, CancellationToken ct) {
         var (category, created) = await categories.CreateAsync(request.Id, request.Name, ct);
         WithETag(category);
-        return created ? CreatedAtRoute(nameof(GetCategory), new { id = category.Id }, category) : Ok(category);
+        return created ? CreatedAtRoute("GetCategory", new { id = category.Id }, category) : Ok(category);
     }
 
     /// <summary>Renomeia e/ou reposiciona. Com If-Match, só se a categoria ainda estiver naquela versão (senão 412).</summary>
-    [HttpPatch("{id:guid}")]
+    [HttpPatch("{id:guid}", Name = "UpdateCategory")]
     [ProducesResponseType<CategoryResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
     public async Task<ActionResult<CategoryResponse>> Update(
-        Guid id, UpdateCategoryRequest request, CancellationToken ct) =>
-        WithETag(await categories.UpdateAsync(id, request.Name, request.SortOrder, IfMatch(), ct));
+        Guid id,
+        UpdateCategoryRequest request,
+        [FromHeader(Name = "If-Match")] string? ifMatch,
+        CancellationToken ct) =>
+        WithETag(await categories.UpdateAsync(id, request.Name, request.SortOrder, Version(ifMatch), ct));
 
     /// <summary>Apaga a categoria e todos os cartões dela.</summary>
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("{id:guid}", Name = "DeleteCategory")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken ct) {
-        await categories.DeleteAsync(id, IfMatch(), ct);
+    public async Task<IActionResult> Delete(
+        Guid id, [FromHeader(Name = "If-Match")] string? ifMatch, CancellationToken ct) {
+        await categories.DeleteAsync(id, Version(ifMatch), ct);
         return NoContent();
     }
 
@@ -57,9 +62,7 @@ public sealed class CategoriesController(CategoryUseCases categories) : Controll
         return category;
     }
 
-    /// <summary>O If-Match sem as aspas; ausente ou "*" significa "sem condição".</summary>
-    private string? IfMatch() {
-        var value = Request.Headers.IfMatch.ToString();
-        return value is "" or "*" ? null : value.Trim('"');
-    }
+    /// <summary>A versão do If-Match, sem as aspas; ausente ou "*" significa "sem condição".</summary>
+    private static string? Version(string? ifMatch) =>
+        string.IsNullOrWhiteSpace(ifMatch) || ifMatch == "*" ? null : ifMatch.Trim().Trim('"');
 }

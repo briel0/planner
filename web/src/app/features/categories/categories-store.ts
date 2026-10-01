@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Category } from '../../core/data/models';
-import { PlannerData } from '../../core/data/planner-data';
+import { newId } from '../../core/data/ids';
+import { PlannerData, PlannerDataError } from '../../core/data/planner-data';
 
 /** Estado das categorias (as abas do rodapé), compartilhado por todas as telas. */
 @Injectable({ providedIn: 'root' })
@@ -27,14 +28,24 @@ export class CategoriesStore {
   }
 
   async create(name: string): Promise<Category> {
-    const created = await this.data.createCategory(name);
+    const created = await this.data.createCategory(newId(), name);
     this.state.update((list) => [...list, created]);
     return created;
   }
 
+  /**
+   * Renomear é editar texto: vai com a versão conhecida (If-Match), para não sobrescrever uma mudança feita em outra
+   * aba. Se a categoria mudou antes, recarrega as abas e repassa o erro (`concurrency.stale`).
+   */
   async rename(id: string, name: string): Promise<void> {
-    const updated = await this.data.updateCategory(id, { name });
-    this.replace(updated);
+    try {
+      this.replace(await this.data.updateCategory(id, { name }, this.byId(id)?.version));
+    } catch (error) {
+      if (error instanceof PlannerDataError && error.code === 'concurrency.stale') {
+        await this.load();
+      }
+      throw error;
+    }
   }
 
   async delete(id: string): Promise<void> {

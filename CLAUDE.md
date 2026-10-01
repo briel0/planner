@@ -3,7 +3,7 @@
 Planner organizado em categorias, com cartões em quadros de canvas livre; cada cartão abre seu próprio quadro, no estilo Notion.
 Os dados precisam ser consumíveis por outros clientes no futuro (scripts, agentes de IA etc.), não só pela UI.
 
-> Status: stack, modelagem (`docs/data-modeling/`), convenções da API e arquitetura decididas. Domínio (`Card`, `Category`, `User`) e persistência (EF Core + Postgres, primeira migration aplicada) implementados e testados; próximo passo: os primeiros casos de uso e endpoints.
+> Status: MVP na fase 2. O front (fase 1) cobre todos os itens do MVP; as **categorias** já vêm da API (Postgres), e os **cartões** ainda estão em memória no front — próximo passo: endpoints de cartões.
 
 ## Visão do produto
 
@@ -116,7 +116,8 @@ Outras ferramentas do ecossistema vivem em repositórios próprios e consomem o 
 
 ## Comandos (frontend, dentro de `web/`)
 
-- `npm start` — servidor de desenvolvimento em http://localhost:4200.
+- `npm start` — servidor de desenvolvimento em http://localhost:4200. Repassa `/api/*` para a API em `localhost:5264` (`proxy.conf.json`, lido só ao iniciar): a API precisa estar rodando (`dotnet run --project src/Planner.Api`, em `api/`).
+- `npm run api:generate` — regera o cliente da API (`src/app/api/`, nunca editado à mão) a partir de `api/openapi/planner.json`; rodar sempre que o contrato mudar (depois de um `dotnet build` na API).
 - `npm run lint` — ESLint; `npm run format` — Prettier corrige; `npm run format:check` — só verifica.
 - `npm test -- --watch=false` — testes (Vitest); `npm run build` — build de produção.
 

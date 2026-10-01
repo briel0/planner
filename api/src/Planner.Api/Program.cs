@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Planner.Api.Authentication;
@@ -36,7 +37,13 @@ builder.Services.AddScoped<ICurrentUser, ClaimsCurrentUser>();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
 // JSON estrito: números só como números ("3" é recusado), para o contrato não virar "number | string".
-builder.Services.AddControllers()
+// O corpo dos pedidos é sempre application/json (sem as variações "text/json" e "application/*+json" que o
+// ASP.NET aceita por padrão), para o contrato não oferecer alternativas que ninguém usa.
+builder.Services.AddControllers(options => {
+    var json = options.InputFormatters.OfType<SystemTextJsonInputFormatter>().Single();
+    json.SupportedMediaTypes.Remove("text/json");
+    json.SupportedMediaTypes.Remove("application/*+json");
+})
     .AddJsonOptions(options => options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.Strict)
     .ConfigureApiBehaviorOptions(options => {
         var defaultFactory = options.InvalidModelStateResponseFactory;

@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, InjectionToken, inject } from '@angular/core';
 import { CARD_SIZE } from './card-size';
+import { newId } from './ids';
 import { Card, CardChanges, CardDetails, CardLocation, CardProperties, Category, Position, Size } from './models';
 import { PlannerData, PlannerDataError } from './planner-data';
 
@@ -10,6 +11,24 @@ const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
 type StoredCard = Omit<Card, 'childCount'>;
 
+export interface FakePlannerDataOptions {
+  /** Começar com os dados de exemplo. */
+  seed: boolean;
+  /**
+   * As categorias vêm de outro lugar (a API real): os cartões falsos aceitam qualquer categoria. Usado durante a
+   * fase 2, enquanto só as categorias já estão ligadas à API.
+   */
+  categoriesElsewhere: boolean;
+}
+
+export const FAKE_PLANNER_DATA_OPTIONS = new InjectionToken<FakePlannerDataOptions>('FakePlannerDataOptions');
+
+let versionCounter = 0;
+/** Imita a `version` da API: muda a cada alteração. */
+function nextVersion(): string {
+  return String(++versionCounter);
+}
+
 /**
  * Fase 1 do MVP: dados em memória, imitando as regras e os erros da API real (mesmos códigos de erro, mesmas
  * cascatas). Tudo se perde ao recarregar a página.
@@ -19,9 +38,16 @@ export class FakePlannerData extends PlannerData {
   private categories: Category[] = [];
   private cards: StoredCard[] = [];
 
+  private readonly options: FakePlannerDataOptions = inject(FAKE_PLANNER_DATA_OPTIONS, { optional: true }) ?? {
+    seed: true,
+    categoriesElsewhere: false,
+  };
+
   constructor() {
     super();
-    this.seed();
+    if (this.options.seed) {
+      this.seed();
+    }
   }
 
   // ---- Categorias ------------------------------------------------------------------------------------------
@@ -30,21 +56,33 @@ export class FakePlannerData extends PlannerData {
     return [...this.categories].sort((a, b) => a.sortOrder - b.sortOrder);
   }
 
-  async createCategory(name: string): Promise<Category> {
+  async createCategory(id: string, name: string): Promise<Category> {
+    const existing = this.categories.find((c) => c.id === id);
+    if (existing) {
+      return existing; // idempotente, como a API
+    }
     const normalized = this.validateCategoryName(name);
     const sortOrder = Math.max(-1, ...this.categories.map((c) => c.sortOrder)) + 1;
-    const category: Category = { id: crypto.randomUUID(), name: normalized, sortOrder, ...timestamps() };
+    const category: Category = { id, name: normalized, sortOrder, ...timestamps(), version: nextVersion() };
     this.categories.push(category);
     return category;
   }
 
-  async updateCategory(id: string, changes: { name?: string; sortOrder?: number }): Promise<Category> {
+  async updateCategory(
+    id: string,
+    changes: { name?: string; sortOrder?: number },
+    ifMatch?: string,
+  ): Promise<Category> {
     const category = this.findCategory(id);
+    if (ifMatch !== undefined && ifMatch !== category.version) {
+      throw new PlannerDataError('concurrency.stale', 412, 'The category changed since the given version.');
+    }
     const updated: Category = {
       ...category,
       name: changes.name === undefined ? category.name : this.validateCategoryName(changes.name, id),
       sortOrder: changes.sortOrder ?? category.sortOrder,
       updatedAt: now(),
+      version: nextVersion(),
     };
     this.categories = this.categories.map((c) => (c.id === id ? updated : c));
     return updated;
@@ -59,7 +97,7 @@ export class FakePlannerData extends PlannerData {
   // ---- Cartões ---------------------------------------------------------------------------------------------
 
   async listRootCards(categoryId: string): Promise<Card[]> {
-    this.findCategory(categoryId);
+    this.requireCategory(categoryId);
     return this.cards.filter((c) => c.categoryId === categoryId && c.parentId === null).map((c) => this.toCard(c));
   }
 
@@ -83,10 +121,10 @@ export class FakePlannerData extends PlannerData {
     const parent = 'parentId' in location ? this.findCard(location.parentId) : null;
     const categoryId = parent
       ? parent.categoryId
-      : this.findCategory((location as { categoryId: string }).categoryId).id;
+      : this.requireCategory((location as { categoryId: string }).categoryId);
     const siblings = this.cards.filter((c) => c.categoryId === categoryId && c.parentId === (parent?.id ?? null));
     const card: StoredCard = {
-      id: crypto.randomUUID(),
+      id: newId(),
       categoryId,
       parentId: parent?.id ?? null,
       title: this.validateTitle(input.title),
@@ -146,6 +184,14 @@ export class FakePlannerData extends PlannerData {
       throw new PlannerDataError('not-found', 404, 'Category not found.');
     }
     return category;
+  }
+
+  /** A categoria precisa existir aqui, a não ser que as categorias venham de outro lugar (a API real). */
+  private requireCategory(id: string): string {
+    if (!this.options.categoriesElsewhere) {
+      this.findCategory(id);
+    }
+    return id;
   }
 
   private findCard(id: string): StoredCard {
@@ -219,12 +265,12 @@ export class FakePlannerData extends PlannerData {
 
   private seed(): void {
     const add = (category: Category) => (this.categories.push(category), category);
-    const faculdade = add({ id: crypto.randomUUID(), name: 'Faculdade', sortOrder: 0, ...timestamps() });
-    const trabalho = add({ id: crypto.randomUUID(), name: 'Trabalho', sortOrder: 1, ...timestamps() });
+    const faculdade = add({ id: newId(), name: 'Faculdade', sortOrder: 0, ...timestamps(), version: nextVersion() });
+    const trabalho = add({ id: newId(), name: 'Trabalho', sortOrder: 1, ...timestamps(), version: nextVersion() });
 
     const card = (categoryId: string, parentId: string | null, title: string, x: number, y: number, extra = {}) => {
       const stored: StoredCard = {
-        id: crypto.randomUUID(),
+        id: newId(),
         categoryId,
         parentId,
         title,

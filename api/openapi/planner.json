@@ -11,6 +11,7 @@
           "Categories"
         ],
         "summary": "As categorias, na ordem das abas.",
+        "operationId": "ListCategories",
         "responses": {
           "200": {
             "description": "OK",
@@ -32,19 +33,10 @@
           "Categories"
         ],
         "summary": "Cria uma categoria. Idempotente: repetir com o mesmo id devolve a categoria existente (200).",
+        "operationId": "CreateCategory",
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCategoryRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCategoryRequest"
-              }
-            },
-            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateCategoryRequest"
               }
@@ -141,6 +133,7 @@
           "Categories"
         ],
         "summary": "Renomeia e/ou reposiciona. Com If-Match, só se a categoria ainda estiver naquela versão (senão 412).",
+        "operationId": "UpdateCategory",
         "parameters": [
           {
             "name": "id",
@@ -150,21 +143,18 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCategoryRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCategoryRequest"
-              }
-            },
-            "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/UpdateCategoryRequest"
               }
@@ -230,6 +220,7 @@
           "Categories"
         ],
         "summary": "Apaga a categoria e todos os cartões dela.",
+        "operationId": "DeleteCategory",
         "parameters": [
           {
             "name": "id",
@@ -238,6 +229,13 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "schema": {
+              "type": "string"
             }
           }
         ],

@@ -13,6 +13,8 @@ const MESSAGES: Record<string, string> = {
   'card.invalid-content': 'Descrição inválida.',
   'card.cycle': 'Não é possível colocar um cartão dentro dele mesmo.',
   'not-found': 'Esse item não existe mais.',
+  'concurrency.stale': 'Isso foi alterado em outro lugar. A versão atual foi carregada; tente de novo.',
+  network: 'Sem conexão com o servidor. Confira se a API está rodando.',
 };
 
 /** Avisos rápidos no canto da tela (snack bar do Material). */

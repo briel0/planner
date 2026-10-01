@@ -24,11 +24,18 @@ export abstract class PlannerData {
   /** GET /categories */
   abstract listCategories(): Promise<Category[]>;
 
-  /** POST /categories */
-  abstract createCategory(name: string): Promise<Category>;
+  /** POST /categories — idempotente: repetir com o mesmo id devolve a categoria já criada. */
+  abstract createCategory(id: string, name: string): Promise<Category>;
 
-  /** PATCH /categories/{id} */
-  abstract updateCategory(id: string, changes: { name?: string; sortOrder?: number }): Promise<Category>;
+  /**
+   * PATCH /categories/{id}. Com `ifMatch` (a `version` conhecida), só altera se ninguém mudou a categoria antes;
+   * senão, falha com o código `concurrency.stale`.
+   */
+  abstract updateCategory(
+    id: string,
+    changes: { name?: string; sortOrder?: number },
+    ifMatch?: string,
+  ): Promise<Category>;
 
   /** DELETE /categories/{id} */
   abstract deleteCategory(id: string): Promise<void>;

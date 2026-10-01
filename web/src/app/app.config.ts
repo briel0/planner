@@ -1,8 +1,9 @@
 import { ApplicationConfig, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import { MatIconRegistry } from '@angular/material/icon';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
-import { FakePlannerData } from './core/data/fake-planner-data';
+import { FAKE_CARDS_FOR_HTTP, HttpPlannerData } from './core/data/http-planner-data';
 import { PlannerData } from './core/data/planner-data';
 
 export const appConfig: ApplicationConfig = {
@@ -14,7 +15,9 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       inject(MatIconRegistry).setDefaultFontSetClass('material-symbols-outlined');
     }),
-    // Fase 1 do MVP: dados falsos em memória. Na fase 2, trocar por HttpPlannerData.
-    { provide: PlannerData, useClass: FakePlannerData },
+    provideHttpClient(withFetch()),
+    // Fase 2: dados da API (categorias). Os cartões ainda são falsos, em memória, até ganharem endpoints.
+    { provide: PlannerData, useClass: HttpPlannerData },
+    ...FAKE_CARDS_FOR_HTTP,
   ],
 };
