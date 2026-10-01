@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Card, CardChanges, CardLocation, CardRef, Position, Size } from '../../core/data/models';
-import { PlannerData } from '../../core/data/planner-data';
+import { newId } from '../../core/data/ids';
+import { PlannerData, PlannerDataError } from '../../core/data/planner-data';
 
 /**
  * Estado do quadro aberto: o de uma categoria ou o de um cartão. Uma instância por página de quadro
@@ -36,13 +37,14 @@ export class BoardStore {
   }
 
   async create(title: string, position: Position): Promise<Card> {
-    const created = await this.data.createCard(this.requireLocation(), { title, position });
+    const created = await this.data.createCard(this.requireLocation(), { id: newId(), title, position });
     this.cards.update((list) => [...list, created]);
     return created;
   }
 
+  /** Título e descrição são texto: vão com If-Match, para não sobrescrever o que foi escrito em outra aba. */
   async rename(id: string, title: string): Promise<void> {
-    await this.change(id, { title });
+    await this.changeText(id, { title });
   }
 
   async changeColor(id: string, color: string): Promise<void> {
@@ -50,7 +52,7 @@ export class BoardStore {
   }
 
   async changeContent(id: string, content: Card['content']): Promise<void> {
-    await this.change(id, { content });
+    await this.changeText(id, { content });
   }
 
   async setProperties(id: string, properties: Card['properties']): Promise<void> {
@@ -110,9 +112,26 @@ export class BoardStore {
     }
   }
 
-  private async change(id: string, changes: CardChanges): Promise<void> {
-    const updated = await this.data.updateCard(id, changes);
+  private async change(id: string, changes: CardChanges, ifMatch?: string): Promise<void> {
+    const updated = await this.data.updateCard(id, changes, ifMatch);
     this.replace(id, () => updated);
+  }
+
+  /** Se o cartão mudou em outro lugar (`concurrency.stale`), recarrega o quadro antes de repassar o erro. */
+  private async changeText(id: string, changes: CardChanges): Promise<void> {
+    try {
+      await this.change(id, changes, this.cards().find((c) => c.id === id)?.version);
+    } catch (error) {
+      if (error instanceof PlannerDataError && error.code === 'concurrency.stale') {
+        await this.reload();
+      }
+      throw error;
+    }
+  }
+
+  private async reload(): Promise<void> {
+    const location = this.requireLocation();
+    await ('parentId' in location ? this.openCard(location.parentId) : this.openCategory(location.categoryId));
   }
 
   private replace(id: string, update: (card: Card) => Card): void {

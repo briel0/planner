@@ -1,4 +1,4 @@
-import { Injectable, InjectionToken, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { CARD_SIZE } from './card-size';
 import { newId } from './ids';
 import { Card, CardChanges, CardDetails, CardLocation, CardProperties, Category, Position, Size } from './models';
@@ -10,18 +10,6 @@ const DEFAULT_CARD_COLOR = '#e5e7eb';
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
 type StoredCard = Omit<Card, 'childCount'>;
-
-export interface FakePlannerDataOptions {
-  /** Começar com os dados de exemplo. */
-  seed: boolean;
-  /**
-   * As categorias vêm de outro lugar (a API real): os cartões falsos aceitam qualquer categoria. Usado durante a
-   * fase 2, enquanto só as categorias já estão ligadas à API.
-   */
-  categoriesElsewhere: boolean;
-}
-
-export const FAKE_PLANNER_DATA_OPTIONS = new InjectionToken<FakePlannerDataOptions>('FakePlannerDataOptions');
 
 let versionCounter = 0;
 /** Imita a `version` da API: muda a cada alteração. */
@@ -38,16 +26,9 @@ export class FakePlannerData extends PlannerData {
   private categories: Category[] = [];
   private cards: StoredCard[] = [];
 
-  private readonly options: FakePlannerDataOptions = inject(FAKE_PLANNER_DATA_OPTIONS, { optional: true }) ?? {
-    seed: true,
-    categoriesElsewhere: false,
-  };
-
   constructor() {
     super();
-    if (this.options.seed) {
-      this.seed();
-    }
+    this.seed();
   }
 
   // ---- Categorias ------------------------------------------------------------------------------------------
@@ -117,14 +98,18 @@ export class FakePlannerData extends PlannerData {
     return { ...this.toCard(card), ancestors };
   }
 
-  async createCard(location: CardLocation, input: { title: string; position: Position }): Promise<Card> {
+  async createCard(location: CardLocation, input: { id: string; title: string; position: Position }): Promise<Card> {
+    const existing = this.cards.find((c) => c.id === input.id);
+    if (existing) {
+      return this.toCard(existing); // idempotente, como a API
+    }
     const parent = 'parentId' in location ? this.findCard(location.parentId) : null;
     const categoryId = parent
       ? parent.categoryId
       : this.requireCategory((location as { categoryId: string }).categoryId);
     const siblings = this.cards.filter((c) => c.categoryId === categoryId && c.parentId === (parent?.id ?? null));
     const card: StoredCard = {
-      id: newId(),
+      id: input.id,
       categoryId,
       parentId: parent?.id ?? null,
       title: this.validateTitle(input.title),
@@ -135,13 +120,17 @@ export class FakePlannerData extends PlannerData {
       properties: {},
       content: null,
       ...timestamps(),
+      version: nextVersion(),
     };
     this.cards.push(card);
     return this.toCard(card);
   }
 
-  async updateCard(id: string, changes: CardChanges): Promise<Card> {
+  async updateCard(id: string, changes: CardChanges, ifMatch?: string): Promise<Card> {
     const card = this.findCard(id);
+    if (ifMatch !== undefined && ifMatch !== card.version) {
+      throw new PlannerDataError('concurrency.stale', 412, 'The card changed since the given version.');
+    }
     const updated: StoredCard = {
       ...card,
       title: changes.title === undefined ? card.title : this.validateTitle(changes.title),
@@ -151,6 +140,7 @@ export class FakePlannerData extends PlannerData {
       properties: changes.properties === undefined ? card.properties : withoutEmpty(changes.properties),
       content: changes.content === undefined ? card.content : this.validateContent(changes.content),
       updatedAt: now(),
+      version: nextVersion(),
     };
     this.cards = this.cards.map((c) => (c.id === id ? updated : c));
     return this.toCard(updated);
@@ -186,12 +176,8 @@ export class FakePlannerData extends PlannerData {
     return category;
   }
 
-  /** A categoria precisa existir aqui, a não ser que as categorias venham de outro lugar (a API real). */
   private requireCategory(id: string): string {
-    if (!this.options.categoriesElsewhere) {
-      this.findCategory(id);
-    }
-    return id;
+    return this.findCategory(id).id;
   }
 
   private findCard(id: string): StoredCard {
@@ -281,6 +267,7 @@ export class FakePlannerData extends PlannerData {
         properties: {},
         content: null,
         ...timestamps(),
+        version: nextVersion(),
         ...extra,
       };
       this.cards.push(stored);

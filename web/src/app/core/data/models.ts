@@ -55,6 +55,8 @@ export interface Card {
   childCount: number;
   createdAt: string;
   updatedAt: string;
+  /** Versão para o If-Match (concorrência otimista); muda a cada alteração. */
+  version: string;
 }
 
 /** Referência curta a um cartão, usada na trilha de navegação. */

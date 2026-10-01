@@ -12,6 +12,7 @@ namespace Planner.Api.Cards;
 public sealed class CardsController(CardUseCases cards) : ControllerBase {
     /// <summary>Os cartões na raiz do quadro de uma categoria.</summary>
     [HttpGet("api/categories/{categoryId:guid}/cards", Name = "ListRootCards")]
+    [ProducesResponseType<IReadOnlyList<CardResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public Task<IReadOnlyList<CardResponse>> ListRoot(Guid categoryId, CancellationToken ct) =>
         cards.ListRootAsync(categoryId, ct);
@@ -28,6 +29,7 @@ public sealed class CardsController(CardUseCases cards) : ControllerBase {
 
     /// <summary>Os cartões no quadro de um cartão.</summary>
     [HttpGet("api/cards/{id:guid}/children", Name = "ListChildCards")]
+    [ProducesResponseType<IReadOnlyList<CardResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public Task<IReadOnlyList<CardResponse>> ListChildren(Guid id, CancellationToken ct) =>
         cards.ListChildrenAsync(id, ct);

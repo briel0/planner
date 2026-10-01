@@ -3,7 +3,7 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { MatIconRegistry } from '@angular/material/icon';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
-import { FAKE_CARDS_FOR_HTTP, HttpPlannerData } from './core/data/http-planner-data';
+import { HttpPlannerData } from './core/data/http-planner-data';
 import { PlannerData } from './core/data/planner-data';
 
 export const appConfig: ApplicationConfig = {
@@ -16,8 +16,7 @@ export const appConfig: ApplicationConfig = {
       inject(MatIconRegistry).setDefaultFontSetClass('material-symbols-outlined');
     }),
     provideHttpClient(withFetch()),
-    // Fase 2: dados da API (categorias). Os cartões ainda são falsos, em memória, até ganharem endpoints.
+    // Os dados vêm da API. (FakePlannerData, os dados em memória da fase 1, continua servindo aos testes.)
     { provide: PlannerData, useClass: HttpPlannerData },
-    ...FAKE_CARDS_FOR_HTTP,
   ],
 };

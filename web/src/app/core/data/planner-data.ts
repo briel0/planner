@@ -49,11 +49,11 @@ export abstract class PlannerData {
   /** GET /cards/{id} */
   abstract getCard(id: string): Promise<CardDetails>;
 
-  /** POST /categories/{id}/cards ou POST /cards/{id}/children */
-  abstract createCard(location: CardLocation, input: { title: string; position: Position }): Promise<Card>;
+  /** POST /categories/{id}/cards ou POST /cards/{id}/children — idempotente pelo `id`. */
+  abstract createCard(location: CardLocation, input: { id: string; title: string; position: Position }): Promise<Card>;
 
-  /** PATCH /cards/{id} */
-  abstract updateCard(id: string, changes: CardChanges): Promise<Card>;
+  /** PATCH /cards/{id}. Com `ifMatch`, só altera se ninguém mudou o cartão antes (`concurrency.stale`). */
+  abstract updateCard(id: string, changes: CardChanges, ifMatch?: string): Promise<Card>;
 
   /** DELETE /cards/{id} — apaga também tudo o que está dentro dele. */
   abstract deleteCard(id: string): Promise<void>;

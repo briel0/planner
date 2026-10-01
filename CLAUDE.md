@@ -3,7 +3,7 @@
 Planner organizado em categorias, com cartões em quadros de canvas livre; cada cartão abre seu próprio quadro, no estilo Notion.
 Os dados precisam ser consumíveis por outros clientes no futuro (scripts, agentes de IA etc.), não só pela UI.
 
-> Status: MVP na fase 2. O front (fase 1) cobre todos os itens do MVP; as **categorias** já vêm da API (Postgres), e os **cartões** ainda estão em memória no front — próximo passo: endpoints de cartões.
+> Status: **MVP implementado de ponta a ponta** — categorias e cartões salvos no Postgres pela API, com o front Angular consumindo o cliente gerado do OpenAPI. Próximos passos naturais: as decisões adiadas com gatilho "concluir o MVP" (CI) e as ideias pós-MVP.
 
 ## Visão do produto
 
@@ -29,7 +29,7 @@ Ideias para depois do MVP (referência de UX: Milanote):
 - **Imagens nos cartões**: colar ou arrastar uma imagem para dentro do cartão (como bloco da descrição ou como cartão só de imagem). Depende da decisão adiada de armazenamento de arquivos.
 - **PDFs com boa visualização**: anexar um PDF a um cartão e lê-lo ali mesmo, com páginas, zoom e rolagem — um diferencial em relação ao Milanote. Candidato a visualizador: pdf.js, da Mozilla (Apache 2.0; conferir a licença da versão na hora). Também depende do armazenamento de arquivos.
 
-Caminho: **fase 1** — front Angular com dados falsos em memória, já no formato de `docs/api-design.md`; **fase 2** — ligar à API uma funcionalidade por vez (cada uma com seu endpoint), levantando as decisões adiadas conforme os gatilhos.
+Caminho (concluído): **fase 1** — front Angular com dados falsos em memória, já no formato de `docs/api-design.md`; **fase 2** — ligar à API uma funcionalidade por vez (cada uma com seu endpoint), levantando as decisões adiadas conforme os gatilhos.
 
 ## Princípios
 
