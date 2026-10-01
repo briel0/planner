@@ -31,21 +31,35 @@
       </button>
     </header>
 
-    <div #viewport class="viewport">
-      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
-      <div class="canvas" (click)="selectedId.set(null)" (dblclick)="createAtPointer($event)">
+    <!--
+      A área do canvas: a bolinha do mouse dá zoom (no ponto do cursor), arrastar o fundo move o canvas,
+      dois cliques no fundo criam um cartão. O "mundo" dentro dela é o canvas transformado pela câmera.
+    -->
+    <div
+      #viewportArea
+      class="viewport"
+      [class.panning]="panning()"
+      [style.background-size]="24 * viewport().zoom + 'px ' + 24 * viewport().zoom + 'px'"
+      [style.background-position]="viewport().pan.x + 'px ' + viewport().pan.y + 'px'"
+      (wheel)="onWheel($event)"
+      (pointerdown)="startPan($event)"
+      (dblclick)="createAtPointer($event)"
+    >
+      <div
+        class="world"
+        [style.transform]="
+          'translate(' + viewport().pan.x + 'px, ' + viewport().pan.y + 'px) scale(' + viewport().zoom + ')'
+        "
+      >
         @for (card of store.cards(); track card.id) {
           <app-card-view
-            cdkDrag
-            cdkDragBoundary=".canvas"
-            [cdkDragFreeDragPosition]="card.position"
-            [cdkDragDisabled]="editingId() === card.id || editingDescriptionId() === card.id"
             [style.z-index]="card.layer"
             [card]="card"
+            [zoom]="viewport().zoom"
             [selected]="selectedId() === card.id"
             [editing]="editingId() === card.id"
             [editingDescription]="editingDescriptionId() === card.id"
-            (cdkDragEnded)="onDragEnded(card, $event)"
+            (moved)="onMoved(card, $event)"
             (selectedChange)="selectedId.set(card.id)"
             (keyAction)="onKeyAction(card, $event)"
             (menuRequested)="openMenu(card, $event)"
@@ -56,9 +70,25 @@
             (descriptionChanged)="onDescriptionChanged(card, $event)"
           />
         }
-        @if (store.status() === 'ready' && store.cards().length === 0) {
-          <p class="empty-hint">Dê dois cliques em qualquer lugar ou use <strong>+ Cartão</strong> para criar.</p>
-        }
+      </div>
+
+      @if (store.status() === 'ready' && store.cards().length === 0) {
+        <p class="empty-hint">Dê dois cliques em qualquer lugar ou use <strong>+ Cartão</strong> para criar.</p>
+      }
+
+      <div class="zoom-controls" role="toolbar" aria-label="Zoom">
+        <button matIconButton aria-label="Diminuir zoom" matTooltip="Diminuir zoom" (click)="zoomBy(1 / 1.25)">
+          <mat-icon>remove</mat-icon>
+        </button>
+        <button matButton class="zoom-level" matTooltip="Voltar a 100%" (click)="resetZoom()">
+          {{ zoomPercent() }}%
+        </button>
+        <button matIconButton aria-label="Aumentar zoom" matTooltip="Aumentar zoom" (click)="zoomBy(1.25)">
+          <mat-icon>add</mat-icon>
+        </button>
+        <button matIconButton aria-label="Enquadrar todos os cartões" matTooltip="Enquadrar tudo" (click)="fitAll()">
+          <mat-icon>fit_screen</mat-icon>
+        </button>
       </div>
     </div>
   }

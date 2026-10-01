@@ -14,8 +14,9 @@ import { Editor } from '@tiptap/core';
 import { MatIcon } from '@angular/material/icon';
 import { CARD_CONTENT_EXTENSIONS, ContentDoc, isEmptyContent, renderContent } from '../../../core/content/card-content';
 import { clampSize } from '../../../core/data/card-size';
-import { Card, Size } from '../../../core/data/models';
+import { Card, Position, Size } from '../../../core/data/models';
 import { readableTextColor } from '../../../shared/ui/color/readable-text-color';
+import { trackPointer } from '../viewport/track-pointer';
 
 /** Uma ação de teclado pedida sobre o cartão (esquema "explorador de arquivos"). */
 export type CardKeyAction = 'open' | 'rename' | 'delete';
@@ -38,6 +39,9 @@ export type CardKeyAction = 'open' | 'rename' | 'delete';
     '[style.width.px]': 'size().width',
     '[style.height.px]': 'size().height',
     '[class.resizing]': 'liveSize() !== null',
+    '[class.dragging]': 'dragOffset() !== null',
+    '[style.transform]': '`translate(${position().x}px, ${position().y}px)`',
+    '(pointerdown)': 'startDrag($event)',
     '(click)': 'onClick($event)',
     '(dblclick)': 'onDoubleClick($event)',
     '(contextmenu)': 'onContextMenu($event)',
@@ -50,6 +54,8 @@ export class CardView {
   readonly editing = input(false);
   /** A descrição está sendo editada (no lugar dela aparece o editor). */
   readonly editingDescription = input(false);
+  /** Zoom atual do canvas: os gestos do mouse (em pixels da tela) são divididos por ele. */
+  readonly zoom = input(1);
 
   readonly selectedChange = output<void>();
   readonly keyAction = output<CardKeyAction>();
@@ -57,9 +63,18 @@ export class CardView {
   readonly renamed = output<string>();
   readonly renameCancelled = output<void>();
   readonly resized = output<Size>();
+  readonly moved = output<Position>();
   readonly descriptionEditRequested = output<void>();
   /** Fim da edição da descrição: o documento novo, ou nulo se ficou vazio. */
   readonly descriptionChanged = output<ContentDoc | null>();
+
+  /** Deslocamento durante o arrastar (antes de soltar), em pixels da tela; nulo no resto do tempo. */
+  protected readonly dragOffset = signal<Position | null>(null);
+  protected readonly position = computed(() => {
+    const offset = this.dragOffset();
+    const { x, y } = this.card().position;
+    return offset ? { x: x + offset.x / this.zoom(), y: y + offset.y / this.zoom() } : { x, y };
+  });
 
   /** Tamanho durante o redimensionamento (antes de soltar); nulo no resto do tempo. */
   protected readonly liveSize = signal<Size | null>(null);
@@ -160,34 +175,47 @@ export class CardView {
     }
   }
 
-  /**
-   * Arrastar o canto inferior direito redimensiona. O cartão muda de tamanho enquanto o ponteiro se move, e o
-   * tamanho final só é avisado (e salvo) ao soltar.
-   */
-  protected startResize(event: PointerEvent): void {
-    event.preventDefault(); // impede o arrastar do cartão inteiro
-    event.stopPropagation();
-    const handle = event.currentTarget as HTMLElement;
-    const start = { x: event.clientX, y: event.clientY, ...this.card().size };
-    handle.setPointerCapture(event.pointerId);
+  /** Arrastar o cartão o move; a posição só é avisada (e salva) ao soltar. */
+  protected startDrag(event: PointerEvent): void {
+    const target = event.target as HTMLElement;
+    const busy = this.editing() || this.editingDescription() || target.closest('.resize-handle, input');
+    if (event.button !== 0 || busy) {
+      return;
+    }
+    event.stopPropagation(); // não move o canvas junto
+    trackPointer(event, {
+      move: (dx, dy) => this.dragOffset.set({ x: dx, y: dy }),
+      end: (moved) => {
+        if (moved) {
+          this.moved.emit(this.position());
+        }
+        this.dragOffset.set(null);
+      },
+    });
+  }
 
-    const move = (e: PointerEvent) =>
-      this.liveSize.set(
-        clampSize({ width: start.width + e.clientX - start.x, height: start.height + e.clientY - start.y }),
-      );
-    const end = () => {
-      handle.removeEventListener('pointermove', move);
-      handle.removeEventListener('pointerup', end);
-      handle.removeEventListener('pointercancel', end);
-      const size = this.liveSize();
-      if (size && (size.width !== start.width || size.height !== start.height)) {
-        this.resized.emit(size);
-      }
-      this.liveSize.set(null);
-    };
-    handle.addEventListener('pointermove', move);
-    handle.addEventListener('pointerup', end);
-    handle.addEventListener('pointercancel', end);
+  /** Arrastar o canto inferior direito redimensiona; o tamanho final só é avisado (e salvo) ao soltar. */
+  protected startResize(event: PointerEvent): void {
+    event.preventDefault();
+    event.stopPropagation(); // não arrasta o cartão nem o canvas
+    const start = this.card().size;
+    trackPointer(
+      event,
+      {
+        move: (dx, dy) =>
+          this.liveSize.set(
+            clampSize({ width: start.width + dx / this.zoom(), height: start.height + dy / this.zoom() }),
+          ),
+        end: (moved) => {
+          const size = this.liveSize();
+          if (moved && size) {
+            this.resized.emit(size);
+          }
+          this.liveSize.set(null);
+        },
+      },
+      0,
+    );
   }
 
   protected commit(value: string): void {

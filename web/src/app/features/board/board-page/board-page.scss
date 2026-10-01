@@ -43,18 +43,26 @@
 }
 
 .viewport {
+  position: relative;
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none; // os gestos de arrastar e de zoom são tratados pelo app
+  background-color: var(--mat-sys-surface-container-lowest);
+  // Grade de pontinhos: acompanha o zoom e o deslocamento (tamanho e posição vêm do componente).
+  background-image: radial-gradient(var(--mat-sys-outline-variant) 1px, transparent 1px);
+
+  &.panning {
+    cursor: grabbing;
+  }
 }
 
-// O canvas: uma área grande com uma grade de pontinhos, onde os cartões ficam em posições livres.
-.canvas {
-  position: relative;
-  width: 4000px;
-  height: 3000px;
-  background-color: var(--mat-sys-surface-container-lowest);
-  background-image: radial-gradient(var(--mat-sys-outline-variant) 1px, transparent 1px);
-  background-size: 24px 24px;
+// O canvas em si: a origem (0, 0) fica no canto, e a câmera é aplicada como transformação.
+.world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
 }
 
 .empty-hint {
@@ -63,6 +71,27 @@
   left: 2rem;
   margin: 0;
   color: var(--mat-sys-on-surface-variant);
+  pointer-events: none;
+}
+
+.zoom-controls {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.125rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-small);
+  background: var(--mat-sys-surface);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+  cursor: default;
+}
+
+.zoom-level {
+  min-width: 4rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .message {

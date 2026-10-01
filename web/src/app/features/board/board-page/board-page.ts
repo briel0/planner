@@ -1,9 +1,9 @@
-import { CdkDrag, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { Component, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { MatTooltip } from '@angular/material/tooltip';
 import { Router, RouterLink } from '@angular/router';
 import { ContentDoc } from '../../../core/content/card-content';
 import { Card, Position, Size } from '../../../core/data/models';
@@ -12,6 +12,9 @@ import { confirmAction } from '../../../shared/ui/confirm-dialog/confirm-dialog'
 import { CategoriesStore } from '../../categories/categories-store';
 import { BoardStore } from '../board-store';
 import { CardKeyAction, CardView } from '../card-view/card-view';
+import { trackPointer } from '../viewport/track-pointer';
+import { DEFAULT_VIEWPORT, Viewport, fitToCards, screenToCanvas, zoomAt } from '../viewport/viewport';
+import { ViewportMemory } from '../viewport/viewport-memory';
 
 const NEW_CARD_TITLE = 'Novo cartão';
 /** Metade do tamanho de um cartão novo, para centralizá-lo no ponto escolhido. */
@@ -24,7 +27,7 @@ const CARD_HALF = { width: 104, height: 32 };
  */
 @Component({
   selector: 'app-board-page',
-  imports: [CdkDrag, CardView, MatButton, MatIcon, MatMenu, MatMenuItem, MatMenuTrigger, RouterLink],
+  imports: [CardView, MatButton, MatIconButton, MatIcon, MatMenu, MatMenuItem, MatMenuTrigger, MatTooltip, RouterLink],
   providers: [BoardStore],
   templateUrl: './board-page.html',
   styleUrl: './board-page.scss',
@@ -35,6 +38,7 @@ export class BoardPage {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly notifier = inject(Notifier);
+  private readonly viewportMemory = inject(ViewportMemory);
 
   /** Vêm da URL: um dos dois está presente. */
   readonly categoryId = input<string>();
@@ -46,11 +50,16 @@ export class BoardPage {
   protected readonly menuCard = signal<Card | null>(null);
   protected readonly menuPosition = signal<Position>({ x: 0, y: 0 });
 
+  /** A "câmera" sobre o canvas (zoom e deslocamento), lembrada por quadro durante a sessão. */
+  protected readonly viewport = signal<Viewport>(DEFAULT_VIEWPORT);
+  protected readonly zoomPercent = computed(() => Math.round(this.viewport().zoom * 100));
+  protected readonly panning = signal(false);
+
   protected readonly category = computed(() =>
     this.categories.categories().find((c) => c.id === this.store.categoryId()),
   );
 
-  private readonly viewport = viewChild.required<ElementRef<HTMLElement>>('viewport');
+  private readonly viewportElement = viewChild.required<ElementRef<HTMLElement>>('viewportArea');
   private readonly menuTrigger = viewChild.required<MatMenuTrigger>('menuTrigger');
   private readonly colorInput = viewChild.required<ElementRef<HTMLInputElement>>('colorInput');
   private readonly dateInput = viewChild.required<ElementRef<HTMLInputElement>>('dateInput');
@@ -70,21 +79,20 @@ export class BoardPage {
 
   /** Botão "+ Cartão": cria no centro da área visível. */
   protected async createAtCenter(): Promise<void> {
-    const viewport = this.viewport().nativeElement;
-    await this.create({
-      x: viewport.scrollLeft + viewport.clientWidth / 2,
-      y: viewport.scrollTop + viewport.clientHeight / 2,
-    });
+    const area = this.viewportElement().nativeElement;
+    await this.create(screenToCanvas(this.viewport(), { x: area.clientWidth / 2, y: area.clientHeight / 2 }));
   }
 
   /** Dois cliques num espaço vazio: cria exatamente ali. */
   protected async createAtPointer(event: MouseEvent): Promise<void> {
-    const canvas = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    await this.create({ x: event.clientX - canvas.left, y: event.clientY - canvas.top });
+    if ((event.target as HTMLElement).closest('.zoom-controls')) {
+      return; // dois cliques rápidos no "+" do zoom não criam cartão
+    }
+    await this.create(screenToCanvas(this.viewport(), this.pointInArea(event)));
   }
 
   private async create(center: Position): Promise<void> {
-    const position = { x: Math.max(0, center.x - CARD_HALF.width), y: Math.max(0, center.y - CARD_HALF.height) };
+    const position = { x: center.x - CARD_HALF.width, y: center.y - CARD_HALF.height };
     try {
       const card = await this.store.create(NEW_CARD_TITLE, position);
       this.selectedId.set(card.id);
@@ -122,11 +130,66 @@ export class BoardPage {
     this.editingId.set(null);
   }
 
-  protected async onDragEnded(card: Card, event: CdkDragEnd): Promise<void> {
-    const position = event.source.getFreeDragPosition();
-    if (position.x !== card.position.x || position.y !== card.position.y) {
-      await this.run(() => this.store.move(card.id, position));
+  protected async onMoved(card: Card, position: Position): Promise<void> {
+    await this.run(() => this.store.move(card.id, position));
+  }
+
+  // ---- Zoom e movimento do canvas --------------------------------------------------------------------------
+
+  /** Bolinha do mouse: zoom em torno do cursor (também o gesto de pinça do touchpad). */
+  protected onWheel(event: WheelEvent): void {
+    event.preventDefault();
+    this.setViewport(zoomAt(this.viewport(), this.pointInArea(event), Math.exp(-event.deltaY * 0.0015)));
+  }
+
+  /** Arrastar o fundo move o canvas; um clique simples no fundo tira a seleção. */
+  protected startPan(event: PointerEvent): void {
+    // Botões de zoom e cartões têm os próprios gestos (capturar o ponteiro aqui roubaria o clique deles).
+    if (event.button !== 0 || (event.target as HTMLElement).closest('.zoom-controls, app-card-view')) {
+      return;
     }
+    const start = this.viewport().pan;
+    trackPointer(event, {
+      move: (dx, dy) => {
+        this.panning.set(true);
+        this.setViewport({ ...this.viewport(), pan: { x: start.x + dx, y: start.y + dy } });
+      },
+      end: (moved) => {
+        this.panning.set(false);
+        if (!moved) {
+          this.selectedId.set(null);
+        }
+      },
+    });
+  }
+
+  protected zoomBy(factor: number): void {
+    const area = this.viewportElement().nativeElement;
+    this.setViewport(zoomAt(this.viewport(), { x: area.clientWidth / 2, y: area.clientHeight / 2 }, factor));
+  }
+
+  protected resetZoom(): void {
+    this.zoomBy(1 / this.viewport().zoom);
+  }
+
+  protected fitAll(): void {
+    const area = this.viewportElement().nativeElement;
+    this.setViewport(fitToCards(this.store.cards(), { width: area.clientWidth, height: area.clientHeight }));
+  }
+
+  private setViewport(viewport: Viewport): void {
+    this.viewport.set(viewport);
+    this.viewportMemory.remember(this.boardKey(), viewport);
+  }
+
+  private boardKey(): string {
+    return this.cardId() ? `card:${this.cardId()}` : `category:${this.categoryId()}`;
+  }
+
+  /** Posição do evento relativa à área do canvas, em pixels da tela. */
+  private pointInArea(event: MouseEvent): Position {
+    const rect = this.viewportElement().nativeElement.getBoundingClientRect();
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   }
 
   protected editDescription(card: Card): void {
@@ -213,6 +276,7 @@ export class BoardPage {
     this.selectedId.set(null);
     this.editingId.set(null);
     this.editingDescriptionId.set(null);
+    this.viewport.set(this.viewportMemory.recall(cardId ? `card:${cardId}` : `category:${categoryId}`));
     try {
       if (cardId) {
         await this.store.openCard(cardId);

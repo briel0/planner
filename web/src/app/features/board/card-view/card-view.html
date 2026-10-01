@@ -21,12 +21,7 @@
 }
 
 <!-- Alça de redimensionar: o canto inferior direito. -->
-<span
-  class="resize-handle"
-  aria-hidden="true"
-  (pointerdown)="startResize($event)"
-  (mousedown)="$event.stopPropagation()"
-></span>
+<span class="resize-handle" aria-hidden="true" (pointerdown)="startResize($event)"></span>
 
 @if (due() || card().properties.done || card().childCount > 0) {
   <div class="meta">
