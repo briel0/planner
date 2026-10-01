@@ -52,7 +52,7 @@ Caminho: **fase 1** — front Angular com dados falsos em memória, já no forma
 - **Projeto Angular (`web/`):** Angular 22, standalone, `strict`, sem zone.js (zoneless), com rotas, sem SSR; testes com Vitest.
 - **Lint e formatação do front:** ESLint (angular-eslint, regras recomendadas + acessibilidade de templates) e Prettier, no padrão do ecossistema TypeScript (`if (`, `} else {`), 2 espaços e 120 colunas. O estilo do sumo-sdk vale só para o C#.
 - **Estilos: SCSS.**
-- **Componentes de UI: PrimeNG**, com o tema **Nora** (o mais sóbrio/corporativo, via `@primeuix/themes`) e os ícones `primeicons`. O Angular CDK (dependência do PrimeNG) fica disponível para o arrastar no canvas.
+- **Componentes de UI: Angular Material** (licença MIT), com tema Material 3 ajustado para um visual sóbrio/corporativo (cantos quase retos, densidade compacta) em `web/src/styles.scss`; ícones Material Symbols instalados localmente (`material-symbols`, Apache 2.0). O Angular CDK serve também para o arrastar no canvas. Rejeitado: PrimeNG — a partir do PrimeUI virou licença comercial que exige chave (com renovação anual mesmo no plano gratuito).
 - **Editor do conteúdo do cartão: Tiptap** (sobre ProseMirror), via `ngx-tiptap`. Conteúdo salvo como JSON do Tiptap (JSONB no Postgres). UI dos blocos (menu `/`, alça de arrastar) construída em componentes Angular. v1 só com parágrafo, título, lista e checklist.
 - **API: REST com aninhamento raso.** `docs/api-design.md` define as **convenções** que todo endpoint segue; os endpoints são criados conforme a necessidade, e a lista oficial é o OpenAPI gerado pelo código.
 - **Contrato: OpenAPI.** A API em .NET publica a especificação OpenAPI; o cliente TypeScript do Angular é gerado a partir dela (nunca escrito à mão). Outros serviços do ecossistema fazem o mesmo em suas linguagens.
@@ -132,6 +132,8 @@ O projeto deve seguir as práticas mais profissionais possíveis. Estas decisõe
 | Hook `commit-msg` validando Conventional Commits | commits passarem a ser feitos à mão com frequência |
 
 ## Convenções
+
+- **Dependências novas: conferir a licença antes de recomendar ou instalar** (preferir MIT/Apache/BSD; evitar licenças comerciais ou que exijam chave).
 
 - **Commits em inglês, no padrão Conventional Commits** (o mesmo do repositório `briel0/sumo-sdk`):
   - Título: `type(scope): summary` — minúsculo, imperativo, sem ponto final, até ~72 caracteres. Ex.: `feat(api): add endpoint to list tasks by date`.

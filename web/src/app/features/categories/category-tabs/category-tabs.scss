@@ -1,0 +1,73 @@
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.5rem;
+  min-height: 2.5rem;
+}
+
+.tab-list {
+  display: flex;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+}
+
+.tab-link {
+  display: block;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-top-width: 2px;
+  color: var(--mat-sys-on-surface);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    color: var(--mat-sys-on-surface);
+    background: var(--mat-sys-surface-container-high);
+  }
+
+  &.active {
+    color: var(--mat-sys-on-surface);
+    font-weight: 600;
+    background: var(--mat-sys-surface);
+    border-color: var(--mat-sys-outline-variant);
+    border-top-color: var(--mat-sys-primary);
+  }
+}
+
+.tab-input {
+  width: 12rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--mat-sys-primary);
+  border-radius: var(--mat-sys-corner-extra-small);
+  font: inherit;
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface);
+  outline: none;
+}
+
+.menu-anchor {
+  position: fixed;
+  width: 0;
+  height: 0;
+  visibility: hidden;
+}
+
+// Visual durante o arrastar (classes do Angular CDK).
+.tab.cdk-drag-preview {
+  background: var(--mat-sys-surface);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+.tab.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.tab-list.cdk-drop-list-dragging .tab:not(.cdk-drag-placeholder) {
+  transition: transform 200ms ease;
+}

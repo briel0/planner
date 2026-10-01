@@ -1,1 +1,51 @@
-/* You can add global styles to this file, and also import other style files */
+/* Estilos globais e tema do Angular Material. Componentes têm os próprios .scss. */
+@use '@angular/material' as mat;
+
+$font-family:
+  system-ui,
+  -apple-system,
+  'Segoe UI',
+  Roboto,
+  sans-serif;
+
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: (
+        plain-family: $font-family,
+        brand-family: $font-family,
+      ),
+      density: -1,
+    )
+  );
+
+  // Visual sóbrio, "corporativo": cantos quase retos no lugar das pílulas arredondadas do Material.
+  @include mat.theme-overrides(
+    (
+      corner-extra-small: 2px,
+      corner-small: 2px,
+      corner-medium: 4px,
+      corner-large: 4px,
+      corner-extra-large: 6px,
+      corner-full: 4px,
+    )
+  );
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: $font-family;
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface);
+}

@@ -1,0 +1,55 @@
+<nav class="tabs" aria-label="Categorias">
+  <ol class="tab-list" cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="onDrop($event)">
+    @for (category of store.categories(); track category.id) {
+      <li class="tab" cdkDrag cdkDragLockAxis="x">
+        @if (editingId() === category.id) {
+          <input
+            #nameInput
+            class="tab-input"
+            aria-label="Nome da categoria"
+            [value]="category.name"
+            (keydown.enter)="commitRename(category, nameInput.value)"
+            (keydown.escape)="cancelRename()"
+            (blur)="commitRename(category, nameInput.value)"
+          />
+        } @else {
+          <a
+            class="tab-link"
+            routerLinkActive="active"
+            [routerLink]="['/categories', category.id]"
+            (dblclick)="startRename(category)"
+            (contextmenu)="openMenu($event, category)"
+          >
+            {{ category.name }}
+          </a>
+        }
+      </li>
+    }
+  </ol>
+
+  <button matIconButton aria-label="Nova categoria" matTooltip="Nova categoria" (click)="createCategory()">
+    <mat-icon>add</mat-icon>
+  </button>
+</nav>
+
+<!-- Menu de contexto: um gatilho invisível posicionado onde o botão direito foi clicado. -->
+<div
+  #menuTrigger="matMenuTrigger"
+  class="menu-anchor"
+  aria-hidden="true"
+  [matMenuTriggerFor]="menu"
+  [style.left.px]="menuPosition().x"
+  [style.top.px]="menuPosition().y"
+></div>
+<mat-menu #menu="matMenu">
+  @if (menuCategory(); as category) {
+    <button mat-menu-item (click)="startRename(category)">
+      <mat-icon>edit</mat-icon>
+      <span>Renomear</span>
+    </button>
+    <button mat-menu-item (click)="confirmDelete(category)">
+      <mat-icon>delete</mat-icon>
+      <span>Apagar</span>
+    </button>
+  }
+</mat-menu>

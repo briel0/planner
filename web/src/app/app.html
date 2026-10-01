@@ -1,6 +1,8 @@
-<!-- Provisório: confirma que o PrimeNG e o tema estão funcionando. Será substituído pelo layout do MVP. -->
-<main class="app">
-  <p-button label="Planner" icon="pi pi-check" />
-</main>
-
-<router-outlet />
+<div class="shell">
+  <main class="board-area">
+    <router-outlet />
+  </main>
+  <footer class="footer">
+    <app-category-tabs />
+  </footer>
+</div>
