@@ -3,7 +3,10 @@
   "version": 1,
   "cli": {
     "packageManager": "npm",
-    "schematicCollections": ["angular-eslint"]
+    "schematicCollections": [
+      "angular-eslint"
+    ],
+    "analytics": "93de5cf9-c3e2-4ae6-9775-f6fab7718828"
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -30,7 +33,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": ["node_modules/primeicons/primeicons.css", "src/styles.scss"]
           },
           "configurations": {
             "production": {

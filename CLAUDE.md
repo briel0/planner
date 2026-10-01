@@ -52,6 +52,7 @@ Caminho: **fase 1** — front Angular com dados falsos em memória, já no forma
 - **Projeto Angular (`web/`):** Angular 22, standalone, `strict`, sem zone.js (zoneless), com rotas, sem SSR; testes com Vitest.
 - **Lint e formatação do front:** ESLint (angular-eslint, regras recomendadas + acessibilidade de templates) e Prettier, no padrão do ecossistema TypeScript (`if (`, `} else {`), 2 espaços e 120 colunas. O estilo do sumo-sdk vale só para o C#.
 - **Estilos: SCSS.**
+- **Componentes de UI: PrimeNG**, com o tema **Nora** (o mais sóbrio/corporativo, via `@primeuix/themes`) e os ícones `primeicons`. O Angular CDK (dependência do PrimeNG) fica disponível para o arrastar no canvas.
 - **Editor do conteúdo do cartão: Tiptap** (sobre ProseMirror), via `ngx-tiptap`. Conteúdo salvo como JSON do Tiptap (JSONB no Postgres). UI dos blocos (menu `/`, alça de arrastar) construída em componentes Angular. v1 só com parágrafo, título, lista e checklist.
 - **API: REST com aninhamento raso.** `docs/api-design.md` define as **convenções** que todo endpoint segue; os endpoints são criados conforme a necessidade, e a lista oficial é o OpenAPI gerado pelo código.
 - **Contrato: OpenAPI.** A API em .NET publica a especificação OpenAPI; o cliente TypeScript do Angular é gerado a partir dela (nunca escrito à mão). Outros serviços do ecossistema fazem o mesmo em suas linguagens.
