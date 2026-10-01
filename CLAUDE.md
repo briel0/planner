@@ -84,6 +84,8 @@ Outras ferramentas do ecossistema vivem em repositórios próprios e consomem o 
 - Docker Engine 28.1.1 + Compose v2 pelo repositório oficial (última versão publicada para o 20.04); usuário no grupo `docker`.
 - Node LTS via nvm (`~/.nvm`) e Angular CLI global (`npm install -g @angular/cli`).
 
+- **Máquina de 7,5 GB de RAM:** comandos pesados (testes, builds, containers) rodam **um de cada vez**, conferindo a memória livre antes (`free -h`). O Vitest está limitado a 2 processos em `web/vitest.config.ts` — no padrão (um por núcleo) ele já travou o sistema.
+
 ## Primeira configuração (máquina nova)
 
 1. `cp .env.example .env` e preencher `POSTGRES_PASSWORD` (ex.: `openssl rand -hex 24`).
