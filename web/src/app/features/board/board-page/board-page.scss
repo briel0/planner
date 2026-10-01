@@ -4,13 +4,25 @@
   height: 100%;
 }
 
+// Três colunas: as laterais dividem o espaço igualmente, então a trilha fica centralizada na página
+// (independente da largura do botão à direita).
 .board-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr minmax(0, auto) 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
   padding: 0.5rem 1rem;
   border-bottom: 1px solid var(--mat-sys-outline-variant);
+
+  .trail {
+    grid-column: 2;
+    justify-content: center;
+  }
+
+  button {
+    grid-column: 3;
+    justify-self: end;
+  }
 }
 
 .trail {
@@ -32,6 +44,7 @@
 }
 
 .trail-current {
+  font-size: 1.125rem;
   font-weight: 600;
 }
 
