@@ -54,9 +54,9 @@ Rejected:
 
 - **Lists return summaries; items return the full representation.** The endpoint's purpose picks the
   representation — the client does not choose. Summaries leave out heavy fields that lists do not need.
-  Example: card summaries omit `content`, so a board with 30 cards does not download 30 rich-text documents
-  (over-fetching), while `GET /cards/{id}` returns the card with its content in one request (no
-  under-fetching). Create and update responses return the full representation.
+  Example: card summaries omit `ancestors`, which only the opened card needs. Create and update responses return
+  the full representation. Card `content` (the rich-text description) *is* part of the summary, because every
+  card shows its description on the board.
 - **Representations are shaped for clients, not copied from tables.** Example: a card's position is
   `{ "x": 120.5, "y": 80 }` and its size `{ "width": 208, "height": 64 }`, although the database splits each
   into two columns.

@@ -39,11 +39,12 @@
             cdkDrag
             cdkDragBoundary=".canvas"
             [cdkDragFreeDragPosition]="card.position"
-            [cdkDragDisabled]="editingId() === card.id"
+            [cdkDragDisabled]="editingId() === card.id || editingDescriptionId() === card.id"
             [style.z-index]="card.layer"
             [card]="card"
             [selected]="selectedId() === card.id"
             [editing]="editingId() === card.id"
+            [editingDescription]="editingDescriptionId() === card.id"
             (cdkDragEnded)="onDragEnded(card, $event)"
             (selectedChange)="selectedId.set(card.id)"
             (keyAction)="onKeyAction(card, $event)"
@@ -51,6 +52,8 @@
             (renamed)="onRenamed(card, $event)"
             (renameCancelled)="cancelRename()"
             (resized)="onResized(card, $event)"
+            (descriptionEditRequested)="editDescription(card)"
+            (descriptionChanged)="onDescriptionChanged(card, $event)"
           />
         }
         @if (store.status() === 'ready' && store.cards().length === 0) {
@@ -76,6 +79,9 @@
       <mat-icon>open_in_new</mat-icon><span>Abrir</span>
     </button>
     <button mat-menu-item (click)="onKeyAction(card, 'rename')"><mat-icon>edit</mat-icon><span>Renomear</span></button>
+    <button mat-menu-item (click)="editDescription(card)">
+      <mat-icon>notes</mat-icon><span>{{ card.content ? 'Editar descrição' : 'Adicionar descrição' }}</span>
+    </button>
     <button mat-menu-item (click)="pickColor(card)"><mat-icon>palette</mat-icon><span>Cor</span></button>
     <button mat-menu-item (click)="pickDueDate(card)">
       <mat-icon>event</mat-icon><span>{{ card.properties.dueOn ? 'Mudar prazo' : 'Definir prazo' }}</span>

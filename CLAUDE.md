@@ -20,9 +20,10 @@ Dentro:
 2. Canvas com cartões: criar, arrastar, renomear, mudar cor, apagar.
 3. Quadro recursivo: abrir um cartão mostra o quadro dele, com trilha de navegação de volta.
 4. Propriedades prazo (`dueOn`) e feito (`done`), visíveis no cartão.
-5. Um usuário fixo de desenvolvimento (sem login).
+5. Descrição em texto rico na face do cartão (o `content`): parágrafos, listas com marcadores e numeradas, negrito e itálico; dois cliques na descrição editam ali mesmo.
+6. Um usuário fixo de desenvolvimento (sem login).
 
-Fora (depois do MVP): editor de conteúdo (Tiptap), camadas (trazer para frente/trás), login com Google, hospedagem, CI.
+Fora (depois do MVP): títulos e checklists na descrição, camadas (trazer para frente/trás), login com Google, hospedagem, CI.
 
 Caminho: **fase 1** — front Angular com dados falsos em memória, já no formato de `docs/api-design.md`; **fase 2** — ligar à API uma funcionalidade por vez (cada uma com seu endpoint), levantando as decisões adiadas conforme os gatilhos.
 
@@ -54,7 +55,7 @@ Caminho: **fase 1** — front Angular com dados falsos em memória, já no forma
 - **Estilos: SCSS.**
 - **Rotas do front: planas e permanentes**, como as da API: `/categories/:categoryId` (quadro da categoria) e `/cards/:cardId` (quadro de um cartão, em qualquer profundidade). A trilha de navegação é calculada subindo pelos pais do cartão; na fase 2, a representação completa do cartão na API ganha a lista de ancestrais (mudança aditiva).
 - **Componentes de UI: Angular Material** (licença MIT), com tema Material 3 ajustado para um visual sóbrio/corporativo (cantos quase retos, densidade compacta) em `web/src/styles.scss`; ícones Material Symbols instalados localmente (`material-symbols`, Apache 2.0). O Angular CDK serve também para o arrastar no canvas. Rejeitado: PrimeNG — a partir do PrimeUI virou licença comercial que exige chave (com renovação anual mesmo no plano gratuito).
-- **Editor do conteúdo do cartão: Tiptap** (sobre ProseMirror), via `ngx-tiptap`. Conteúdo salvo como JSON do Tiptap (JSONB no Postgres). UI dos blocos (menu `/`, alça de arrastar) construída em componentes Angular. v1 só com parágrafo, título, lista e checklist.
+- **Editor do conteúdo do cartão: Tiptap** (sobre ProseMirror, MIT), usado diretamente (sem `ngx-tiptap`: o editor só existe enquanto a descrição está sendo editada). Conteúdo salvo como JSON do Tiptap (JSONB no Postgres) e exibido na face do cartão. Extensões permitidas em `web/src/app/core/content/card-content.ts`: parágrafo, listas, negrito, itálico; títulos e checklists depois do MVP.
 - **API: REST com aninhamento raso.** `docs/api-design.md` define as **convenções** que todo endpoint segue; os endpoints são criados conforme a necessidade, e a lista oficial é o OpenAPI gerado pelo código.
 - **Contrato: OpenAPI.** A API em .NET publica a especificação OpenAPI; o cliente TypeScript do Angular é gerado a partir dela (nunca escrito à mão). Outros serviços do ecossistema fazem o mesmo em suas linguagens.
 

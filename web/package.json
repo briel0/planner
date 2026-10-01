@@ -22,6 +22,9 @@
     "@angular/material": "^22.2.1",
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
+    "@tiptap/core": "^3.31.4",
+    "@tiptap/pm": "^3.31.4",
+    "@tiptap/starter-kit": "^3.31.4",
     "material-symbols": "^0.47.5",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"

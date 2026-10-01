@@ -1,3 +1,5 @@
+import { ContentDoc } from '../content/card-content';
+
 /**
  * Formatos dos dados trocados com a API, seguindo docs/api-design.md (camelCase, instantes em ISO 8601 UTC,
  * dias em YYYY-MM-DD). Na fase 2 estes tipos passam a ser gerados a partir do OpenAPI.
@@ -45,6 +47,8 @@ export interface Card {
   /** Ordem de sobreposição no quadro: maior fica na frente. */
   layer: number;
   properties: CardProperties;
+  /** Descrição em texto rico (documento do Tiptap), ou nulo quando o cartão não tem descrição. */
+  content: ContentDoc | null;
   /** Quantos cartões existem dentro do quadro deste. */
   childCount: number;
   createdAt: string;
@@ -72,4 +76,5 @@ export interface CardChanges {
   position?: Position;
   size?: Size;
   properties?: CardProperties;
+  content?: ContentDoc | null;
 }

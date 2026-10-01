@@ -10,6 +10,7 @@ const MESSAGES: Record<string, string> = {
   'card.invalid-color': 'Cor inválida.',
   'card.invalid-position': 'Posição inválida.',
   'card.invalid-size': 'Tamanho fora dos limites permitidos.',
+  'card.invalid-content': 'Descrição inválida.',
   'card.cycle': 'Não é possível colocar um cartão dentro dele mesmo.',
   'not-found': 'Esse item não existe mais.',
 };

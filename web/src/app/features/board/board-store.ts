@@ -49,6 +49,10 @@ export class BoardStore {
     await this.change(id, { color });
   }
 
+  async changeContent(id: string, content: Card['content']): Promise<void> {
+    await this.change(id, { content });
+  }
+
   async setProperties(id: string, properties: Card['properties']): Promise<void> {
     await this.change(id, { properties });
   }

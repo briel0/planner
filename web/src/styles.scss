@@ -49,3 +49,43 @@ body {
   color: var(--mat-sys-on-surface);
   background: var(--mat-sys-surface);
 }
+
+/*
+ * Descrição dos cartões (texto rico do Tiptap). Fica nos estilos globais porque o HTML é gerado a partir do
+ * documento, fora do template do componente (o encapsulamento de estilos do Angular não o alcança).
+ */
+.card-description {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  cursor: text;
+
+  p {
+    margin: 0 0 0.25rem;
+  }
+
+  ul,
+  ol {
+    margin: 0 0 0.25rem;
+    padding-left: 1.25rem;
+  }
+
+  li > p {
+    margin: 0;
+  }
+
+  &.editing {
+    overflow: auto;
+    border-radius: var(--mat-sys-corner-extra-small);
+    outline: 1px dashed currentColor;
+    outline-offset: 2px;
+    cursor: auto;
+
+    .ProseMirror {
+      min-height: 1.5rem;
+      outline: none;
+    }
+  }
+}

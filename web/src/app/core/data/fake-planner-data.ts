@@ -95,6 +95,7 @@ export class FakePlannerData extends PlannerData {
       size: { ...CARD_SIZE.default },
       layer: Math.max(-1, ...siblings.map((c) => c.layer)) + 1, // nasce na frente dos outros
       properties: {},
+      content: null,
       ...timestamps(),
     };
     this.cards.push(card);
@@ -110,6 +111,7 @@ export class FakePlannerData extends PlannerData {
       position: changes.position === undefined ? card.position : this.validatePosition(changes.position),
       size: changes.size === undefined ? card.size : this.validateSize(changes.size),
       properties: changes.properties === undefined ? card.properties : withoutEmpty(changes.properties),
+      content: changes.content === undefined ? card.content : this.validateContent(changes.content),
       updatedAt: now(),
     };
     this.cards = this.cards.map((c) => (c.id === id ? updated : c));
@@ -196,6 +198,14 @@ export class FakePlannerData extends PlannerData {
     return { x: position.x, y: position.y };
   }
 
+  private validateContent(content: CardChanges['content']): StoredCard['content'] {
+    const isObject = typeof content === 'object' && !Array.isArray(content);
+    if (content !== null && !isObject) {
+      throw new PlannerDataError('card.invalid-content', 400, 'Card content must be a JSON object.');
+    }
+    return content ?? null;
+  }
+
   private validateSize(size: Size): Size {
     const { min, max } = CARD_SIZE;
     const fits = (value: number, low: number, high: number) => value >= low && value <= high;
@@ -223,6 +233,7 @@ export class FakePlannerData extends PlannerData {
         size: { ...CARD_SIZE.default },
         layer: 0,
         properties: {},
+        content: null,
         ...timestamps(),
         ...extra,
       };
@@ -230,7 +241,23 @@ export class FakePlannerData extends PlannerData {
       return stored;
     };
 
-    const fisica = card(faculdade.id, null, 'Física Quântica', 80, 80, { color: '#bfdbfe' });
+    const fisica = card(faculdade.id, null, 'Física Quântica', 80, 80, {
+      color: '#bfdbfe',
+      size: { width: 260, height: 150 },
+      content: {
+        type: 'doc',
+        content: [
+          { type: 'paragraph', content: [{ type: 'text', text: 'Quinta, 10h — sala 402' }] },
+          {
+            type: 'bulletList',
+            content: ['Lista 3 até sexta', 'Revisar oscilador harmônico'].map((text) => ({
+              type: 'listItem',
+              content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
+            })),
+          },
+        ],
+      },
+    });
     card(faculdade.id, fisica.id, 'Lista 3', 60, 60, { properties: { dueOn: inDays(3) } });
     card(faculdade.id, fisica.id, 'Prova 1', 320, 60, { color: '#fecaca', properties: { dueOn: inDays(10) } });
     card(faculdade.id, null, 'AED', 360, 80, { color: '#bbf7d0' });

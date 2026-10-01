@@ -1,5 +1,18 @@
-import { Component, ElementRef, computed, effect, input, output, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { Editor } from '@tiptap/core';
 import { MatIcon } from '@angular/material/icon';
+import { CARD_CONTENT_EXTENSIONS, ContentDoc, isEmptyContent, renderContent } from '../../../core/content/card-content';
 import { clampSize } from '../../../core/data/card-size';
 import { Card, Size } from '../../../core/data/models';
 import { readableTextColor } from '../../../shared/ui/color/readable-text-color';
@@ -35,6 +48,8 @@ export class CardView {
   readonly card = input.required<Card>();
   readonly selected = input(false);
   readonly editing = input(false);
+  /** A descrição está sendo editada (no lugar dela aparece o editor). */
+  readonly editingDescription = input(false);
 
   readonly selectedChange = output<void>();
   readonly keyAction = output<CardKeyAction>();
@@ -42,6 +57,9 @@ export class CardView {
   readonly renamed = output<string>();
   readonly renameCancelled = output<void>();
   readonly resized = output<Size>();
+  readonly descriptionEditRequested = output<void>();
+  /** Fim da edição da descrição: o documento novo, ou nulo se ficou vazio. */
+  readonly descriptionChanged = output<ContentDoc | null>();
 
   /** Tamanho durante o redimensionamento (antes de soltar); nulo no resto do tempo. */
   protected readonly liveSize = signal<Size | null>(null);
@@ -50,7 +68,16 @@ export class CardView {
   protected readonly textColor = computed(() => readableTextColor(this.card().color));
   protected readonly due = computed(() => describeDue(this.card().properties.dueOn, this.card().properties.done));
 
+  /** HTML da descrição para exibir; nulo quando o cartão não tem descrição. */
+  protected readonly descriptionHtml = computed(() => {
+    const content = this.card().content;
+    return isEmptyContent(content) ? null : renderContent(content as ContentDoc);
+  });
+
   private readonly titleInput = viewChild<ElementRef<HTMLInputElement>>('titleInput');
+  private readonly editorHost = viewChild<ElementRef<HTMLElement>>('editorHost');
+  /** O editor existe só enquanto a descrição está sendo editada. */
+  private editor: Editor | null = null;
 
   constructor() {
     effect(() => {
@@ -58,6 +85,49 @@ export class CardView {
       input?.focus();
       input?.select();
     });
+    effect(() => {
+      const host = this.editorHost()?.nativeElement;
+      if (host && !this.editor) {
+        this.startEditor(host);
+      }
+    });
+    inject(DestroyRef).onDestroy(() => this.editor?.destroy());
+  }
+
+  protected onDescriptionDoubleClick(event: MouseEvent): void {
+    event.stopPropagation(); // edita, em vez de abrir o quadro do cartão
+    this.descriptionEditRequested.emit();
+  }
+
+  private startEditor(host: HTMLElement): void {
+    this.editor = new Editor({
+      element: host,
+      extensions: CARD_CONTENT_EXTENSIONS,
+      content: this.card().content ?? '',
+      autofocus: 'end',
+      editorProps: {
+        handleKeyDown: (_view, event) => {
+          if (event.key === 'Escape') {
+            this.editor?.commands.blur();
+            return true;
+          }
+          return false;
+        },
+      },
+      onBlur: () => this.finishEditor(),
+    });
+  }
+
+  /** Sair do editor (clicar fora ou Esc) salva. */
+  private finishEditor(): void {
+    const editor = this.editor;
+    if (!editor) {
+      return;
+    }
+    this.editor = null;
+    const doc = editor.getJSON();
+    editor.destroy();
+    this.descriptionChanged.emit(isEmptyContent(doc) ? null : doc);
   }
 
   protected onClick(event: MouseEvent): void {
@@ -80,8 +150,8 @@ export class CardView {
   }
 
   protected onKeydown(event: KeyboardEvent): void {
-    if (this.editing()) {
-      return;
+    if (this.editing() || this.editingDescription() || (event.target as HTMLElement).isContentEditable) {
+      return; // as teclas pertencem ao campo de texto
     }
     const action = KEY_ACTIONS[event.key];
     if (action) {

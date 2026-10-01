@@ -14,6 +14,12 @@
   <span class="title">{{ card().title }}</span>
 }
 
+@if (editingDescription()) {
+  <div #editorHost class="card-description editing"></div>
+} @else if (descriptionHtml(); as html) {
+  <div class="card-description" [innerHTML]="html" (dblclick)="onDescriptionDoubleClick($event)"></div>
+}
+
 <!-- Alça de redimensionar: o canto inferior direito. -->
 <span
   class="resize-handle"

@@ -5,6 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { Router, RouterLink } from '@angular/router';
+import { ContentDoc } from '../../../core/content/card-content';
 import { Card, Position, Size } from '../../../core/data/models';
 import { Notifier } from '../../../core/feedback/notifier';
 import { confirmAction } from '../../../shared/ui/confirm-dialog/confirm-dialog';
@@ -41,6 +42,7 @@ export class BoardPage {
 
   protected readonly selectedId = signal<string | null>(null);
   protected readonly editingId = signal<string | null>(null);
+  protected readonly editingDescriptionId = signal<string | null>(null);
   protected readonly menuCard = signal<Card | null>(null);
   protected readonly menuPosition = signal<Position>({ x: 0, y: 0 });
 
@@ -127,6 +129,18 @@ export class BoardPage {
     }
   }
 
+  protected editDescription(card: Card): void {
+    this.selectedId.set(card.id);
+    this.editingDescriptionId.set(card.id);
+  }
+
+  protected async onDescriptionChanged(card: Card, content: ContentDoc | null): Promise<void> {
+    this.editingDescriptionId.set(null);
+    if (JSON.stringify(content) !== JSON.stringify(card.content)) {
+      await this.run(() => this.store.changeContent(card.id, content));
+    }
+  }
+
   protected async onResized(card: Card, size: Size): Promise<void> {
     await this.run(() => this.store.resize(card.id, size));
   }
@@ -198,6 +212,7 @@ export class BoardPage {
   private async openBoard(categoryId: string | undefined, cardId: string | undefined): Promise<void> {
     this.selectedId.set(null);
     this.editingId.set(null);
+    this.editingDescriptionId.set(null);
     try {
       if (cardId) {
         await this.store.openCard(cardId);
