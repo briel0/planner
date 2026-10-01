@@ -25,6 +25,10 @@ Dentro:
 
 Fora (depois do MVP): títulos e checklists na descrição, camadas (trazer para frente/trás), login com Google, hospedagem, CI.
 
+Ideias para depois do MVP (referência de UX: Milanote):
+- **Imagens nos cartões**: colar ou arrastar uma imagem para dentro do cartão (como bloco da descrição ou como cartão só de imagem). Depende da decisão adiada de armazenamento de arquivos.
+- **PDFs com boa visualização**: anexar um PDF a um cartão e lê-lo ali mesmo, com páginas, zoom e rolagem — um diferencial em relação ao Milanote. Candidato a visualizador: pdf.js, da Mozilla (Apache 2.0; conferir a licença da versão na hora). Também depende do armazenamento de arquivos.
+
 Caminho: **fase 1** — front Angular com dados falsos em memória, já no formato de `docs/api-design.md`; **fase 2** — ligar à API uma funcionalidade por vez (cada uma com seu endpoint), levantando as decisões adiadas conforme os gatilhos.
 
 ## Princípios
@@ -132,7 +136,7 @@ O projeto deve seguir as práticas mais profissionais possíveis. Estas decisõe
 | Autenticação e autorização. **Requisito já definido: login com a conta do Google** (OpenID Connect). Impacto previsto na modelagem: identificar o usuário pelo id da conta no provedor (não só pelo e-mail), talvez numa tabela de logins externos para permitir outros provedores depois | o app ir para a internet (ou o primeiro cliente externo) |
 | Hospedagem, domínio e HTTPS (candidato: VPS com o mesmo Docker Compose; conferir Azure for Students e GitHub Student Developer Pack) | o app ir para a internet |
 | Rate limiting (limite de pedidos por cliente) | o app ir para a internet |
-| Armazenamento de arquivos de imagem | o conteúdo dos cards aceitar imagens |
+| Armazenamento de arquivos (imagens, PDFs: onde ficam os arquivos; o banco guarda só a referência) | começar as imagens ou os PDFs nos cartões (ideias pós-MVP) |
 | Hook `commit-msg` validando Conventional Commits | commits passarem a ser feitos à mão com frequência |
 
 ## Convenções
