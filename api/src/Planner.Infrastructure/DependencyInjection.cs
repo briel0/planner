@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Planner.Application.Cards;
 using Planner.Application.Categories;
 using Planner.Application.Common;
 using Planner.Infrastructure.Persistence;
+using Planner.Infrastructure.Persistence.Cards;
 using Planner.Infrastructure.Persistence.Categories;
 
 namespace Planner.Infrastructure;
@@ -21,6 +23,8 @@ public static class DependencyInjection {
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<ICategoryQueries, CategoryQueries>();
+        services.AddScoped<ICardRepository, CardRepository>();
+        services.AddScoped<ICardQueries, CardQueries>();
 
         return services;
     }

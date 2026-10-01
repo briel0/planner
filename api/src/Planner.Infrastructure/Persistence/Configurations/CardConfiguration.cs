@@ -62,6 +62,7 @@ internal sealed class CardConfiguration : IEntityTypeConfiguration<Card> {
             table.HasCheckConstraint("ck_cards_properties", "jsonb_typeof(properties) = 'object'");
         });
 
+        builder.HasVersion();
         builder.HasTimestamps();
     }
 }

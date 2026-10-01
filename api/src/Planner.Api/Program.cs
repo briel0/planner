@@ -1,9 +1,12 @@
 using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.OpenApi;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Planner.Api.Authentication;
+using Planner.Api.Cards;
 using Planner.Api.Errors;
 using Planner.Application;
 using Planner.Application.Common;
@@ -56,7 +59,23 @@ builder.Services.AddControllers(options => {
         };
     });
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+    // O conteúdo dos cartões (JsonElement) é sempre um objeto JSON (documento do Tiptap), não "qualquer valor".
+    options.AddSchemaTransformer((schema, context, _) => {
+        var type = context.JsonTypeInfo.Type;
+        if((Nullable.GetUnderlyingType(type) ?? type) == typeof(JsonElement) && schema.OneOf is not { Count: > 0 }) {
+            schema.Type = JsonSchemaType.Object;
+            schema.AdditionalPropertiesAllowed = true;
+        }
+        // No PATCH, "content": null apaga a descrição: o contrato precisa dizer que null é aceito.
+        if(type == typeof(UpdateCardRequest) && schema.Properties?.TryGetValue("content", out var content) == true) {
+            schema.Properties["content"] = new OpenApiSchema {
+                Description = content.Description,
+                OneOf = [new OpenApiSchema { Type = JsonSchemaType.Null }, content],
+            };
+        }
+        return Task.CompletedTask;
+    }));
 
 var app = builder.Build();
 

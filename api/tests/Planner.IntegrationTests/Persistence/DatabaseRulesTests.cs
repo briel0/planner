@@ -15,7 +15,7 @@ public class DatabaseRulesTests(PlannerFixture postgres) {
     [Fact]
     public async Task Card_round_trips_with_value_objects_and_properties() {
         var category = await CreateCategoryAsync();
-        var card = Card.Create(category.Id, "Lista 3");
+        var card = Card.Create(Guid.CreateVersion7(), category.Id, "Lista 3");
         card.ChangeColor("#3B82F6");
         card.MoveTo(new Position(120.5, -80));
         card.Resize(new Size(300.5, 120));
@@ -52,8 +52,8 @@ public class DatabaseRulesTests(PlannerFixture postgres) {
     public async Task Child_card_cannot_have_a_category_different_from_its_parent() {
         var category = await CreateCategoryAsync();
         var otherCategory = await CreateCategoryAsync();
-        var parent = Card.Create(category.Id, "Física Quântica");
-        var child = Card.CreateInside(parent, "Lista 3");
+        var parent = Card.Create(Guid.CreateVersion7(), category.Id, "Física Quântica");
+        var child = Card.CreateInside(Guid.CreateVersion7(), parent, "Lista 3");
         await SaveAsync(parent, child);
 
         // O domínio nunca faz isso; aqui o banco é testado diretamente, como última linha de defesa.
@@ -69,9 +69,9 @@ public class DatabaseRulesTests(PlannerFixture postgres) {
     public async Task Moving_a_root_card_to_another_category_moves_its_whole_subtree() {
         var category = await CreateCategoryAsync();
         var otherCategory = await CreateCategoryAsync();
-        var root = Card.Create(category.Id, "Física Quântica");
-        var child = Card.CreateInside(root, "Lista 3");
-        var grandchild = Card.CreateInside(child, "Exercício 5");
+        var root = Card.Create(Guid.CreateVersion7(), category.Id, "Física Quântica");
+        var child = Card.CreateInside(Guid.CreateVersion7(), root, "Lista 3");
+        var grandchild = Card.CreateInside(Guid.CreateVersion7(), child, "Exercício 5");
         await SaveAsync(root, child, grandchild);
 
         await using(var db = postgres.NewContext()) {
@@ -91,9 +91,9 @@ public class DatabaseRulesTests(PlannerFixture postgres) {
     [Fact]
     public async Task Card_cannot_be_moved_inside_one_of_its_descendants() {
         var category = await CreateCategoryAsync();
-        var a = Card.Create(category.Id, "A");
-        var b = Card.CreateInside(a, "B");
-        var c = Card.CreateInside(b, "C");
+        var a = Card.Create(Guid.CreateVersion7(), category.Id, "A");
+        var b = Card.CreateInside(Guid.CreateVersion7(), a, "B");
+        var c = Card.CreateInside(Guid.CreateVersion7(), b, "C");
         await SaveAsync(a, b, c);
 
         await using var db = postgres.NewContext();
@@ -109,8 +109,8 @@ public class DatabaseRulesTests(PlannerFixture postgres) {
     [Fact]
     public async Task Deleting_a_category_deletes_all_of_its_cards() {
         var category = await CreateCategoryAsync();
-        var root = Card.Create(category.Id, "Física Quântica");
-        var child = Card.CreateInside(root, "Lista 3");
+        var root = Card.Create(Guid.CreateVersion7(), category.Id, "Física Quântica");
+        var child = Card.CreateInside(Guid.CreateVersion7(), root, "Lista 3");
         await SaveAsync(root, child);
 
         await using(var db = postgres.NewContext()) {
@@ -124,7 +124,7 @@ public class DatabaseRulesTests(PlannerFixture postgres) {
     [Fact]
     public async Task Updated_at_is_refreshed_on_every_update() {
         var category = await CreateCategoryAsync();
-        var card = Card.Create(category.Id, "Lista 3");
+        var card = Card.Create(Guid.CreateVersion7(), category.Id, "Lista 3");
         await SaveAsync(card);
         var before = await UpdatedAtAsync(card.Id);
 
@@ -140,7 +140,7 @@ public class DatabaseRulesTests(PlannerFixture postgres) {
     [Fact]
     public async Task Invalid_color_is_rejected_by_the_database() {
         var category = await CreateCategoryAsync();
-        var card = Card.Create(category.Id, "Lista 3");
+        var card = Card.Create(Guid.CreateVersion7(), category.Id, "Lista 3");
         await SaveAsync(card);
 
         await using var db = postgres.NewContext();
@@ -154,7 +154,7 @@ public class DatabaseRulesTests(PlannerFixture postgres) {
     [Fact]
     public async Task Size_outside_the_limits_is_rejected_by_the_database() {
         var category = await CreateCategoryAsync();
-        var card = Card.Create(category.Id, "Lista 3");
+        var card = Card.Create(Guid.CreateVersion7(), category.Id, "Lista 3");
         await SaveAsync(card);
 
         await using var db = postgres.NewContext();

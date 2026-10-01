@@ -268,10 +268,541 @@
           }
         }
       }
+    },
+    "/api/categories/{categoryId}/cards": {
+      "get": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "Os cartões na raiz do quadro de uma categoria.",
+        "operationId": "ListRootCards",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "Cria um cartão na raiz do quadro de uma categoria. Idempotente (repetir com o mesmo id devolve 200).",
+        "operationId": "CreateRootCard",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cards/{id}/children": {
+      "get": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "Os cartões no quadro de um cartão.",
+        "operationId": "ListChildCards",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "Cria um cartão dentro de outro (na mesma categoria). Idempotente (repetir com o mesmo id devolve 200).",
+        "operationId": "CreateChildCard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardResponse"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cards/{id}": {
+      "get": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "O cartão completo, com os ancestrais (para a trilha de navegação).",
+        "operationId": "GetCard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "Altera os campos enviados, ou move o cartão (`location`). Com If-Match, só se o cartão ainda estiver\nnaquela versão (senão 412). Mover para dentro de um descendente é recusado (409 card.cycle).",
+        "operationId": "UpdateCard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "Apaga o cartão e tudo o que está dentro dele.",
+        "operationId": "DeleteCard",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Precondition Failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "CardLocationRequest": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Para a raiz do quadro desta categoria.",
+            "format": "uuid"
+          },
+          "parentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Para dentro do quadro deste cartão (assumindo a categoria dele).",
+            "format": "uuid"
+          }
+        },
+        "description": "Para onde mover: exatamente um dos dois."
+      },
+      "CardPropertiesDto": {
+        "type": "object",
+        "properties": {
+          "dueOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "done": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "CardRef": {
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "CardResponse": {
+        "required": [
+          "id",
+          "categoryId",
+          "parentId",
+          "title",
+          "color",
+          "position",
+          "size",
+          "layer",
+          "properties",
+          "content",
+          "childCount",
+          "createdAt",
+          "updatedAt",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "position": {
+            "$ref": "#/components/schemas/PositionDto"
+          },
+          "size": {
+            "$ref": "#/components/schemas/SizeDto"
+          },
+          "layer": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/CardPropertiesDto"
+          },
+          "content": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "childCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string"
+          },
+          "ancestors": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CardRef"
+            }
+          }
+        }
+      },
       "CategoryResponse": {
         "required": [
           "id",
@@ -307,6 +838,29 @@
           }
         }
       },
+      "CreateCardRequest": {
+        "required": [
+          "id",
+          "title",
+          "position"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Gerado pelo cliente (UUID v7): repetir o pedido com o mesmo id não duplica o cartão.",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Título: 1 a 200 caracteres."
+          },
+          "position": {
+            "description": "Onde o cartão aparece no quadro.",
+            "$ref": "#/components/schemas/PositionDto"
+          }
+        }
+      },
       "CreateCategoryRequest": {
         "required": [
           "id",
@@ -322,6 +876,26 @@
           "name": {
             "type": "string",
             "description": "Nome da aba: 1 a 100 caracteres, único entre as categorias do usuário."
+          }
+        }
+      },
+      "JsonElement": {
+        "type": "object"
+      },
+      "PositionDto": {
+        "required": [
+          "x",
+          "y"
+        ],
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "format": "double"
+          },
+          "y": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -361,6 +935,95 @@
           }
         }
       },
+      "SizeDto": {
+        "required": [
+          "width",
+          "height"
+        ],
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": "number",
+            "format": "double"
+          },
+          "height": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "UpdateCardRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "color": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Cor livre, no formato #rrggbb."
+          },
+          "position": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PositionDto"
+              }
+            ]
+          },
+          "size": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SizeDto"
+              }
+            ]
+          },
+          "content": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "A descrição (documento do Tiptap, sempre um objeto JSON). `null` apaga a descrição; ausente, não muda.",
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "properties": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Substitui todas as propriedades do catálogo (as ausentes ou nulas são removidas).",
+                "$ref": "#/components/schemas/CardPropertiesDto"
+              }
+            ]
+          },
+          "location": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Mover o cartão para outro quadro.",
+                "$ref": "#/components/schemas/CardLocationRequest"
+              }
+            ]
+          }
+        },
+        "description": "Só os campos enviados são alterados (todos opcionais)."
+      },
       "UpdateCategoryRequest": {
         "type": "object",
         "properties": {
@@ -385,6 +1048,9 @@
   "tags": [
     {
       "name": "Categories"
+    },
+    {
+      "name": "Cards"
     }
   ]
 }

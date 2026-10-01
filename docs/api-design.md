@@ -36,8 +36,9 @@ the conventions, not a promise that those endpoints exist.
 **Shallow nesting.**
 
 - **Items live at a flat, permanent URL**, no matter where they sit in the tree. A card is always
-  `/cards/{id}`; its URL never changes when it is moved. Moving is changing its parent or category with
-  `PATCH`.
+  `/cards/{id}`; its URL never changes when it is moved. Moving is a `PATCH` with a `location` object holding
+  exactly one of `parentId` (into another card's board) or `categoryId` (to the root of a category's board).
+  Moving a card into one of its own descendants answers `409` (`card.cycle`).
 - **Collections are nested exactly one level under their direct owner.** Example: the cards on a category's
   board are `/categories/{id}/cards`; the cards on a card's own board are `/cards/{id}/children`. Creating
   through the owner's collection gives the new resource its context (a card created under a parent takes the
@@ -51,6 +52,13 @@ Rejected:
   id alone, and its URL would change whenever it is moved.
 - **Everything flat with filters** (`/cards?parentId=null`, `POST /cards` with `categoryId` and `parentId` in
   the body): awkward "null" filters and room for contradictory requests.
+
+## Partial updates
+
+- **`PATCH` changes only the fields it sends**; an absent field is left untouched.
+- Where "absent" and "empty" mean different things, `null` is meaningful: `"content": null` clears a card's
+  description, while omitting `content` keeps it. The OpenAPI contract marks such fields as nullable.
+- `properties` replaces the whole set of catalog properties: absent or null keys are removed.
 
 ## Users and access
 

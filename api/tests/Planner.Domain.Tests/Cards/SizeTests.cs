@@ -24,7 +24,7 @@ public class SizeTests {
 
     [Fact]
     public void New_cards_have_the_default_size_and_can_be_resized() {
-        var card = Card.Create(Guid.CreateVersion7(), "Lista 3");
+        var card = Card.Create(Guid.CreateVersion7(), categoryId: Guid.CreateVersion7(), "Lista 3");
         Assert.Equal(new Size(208, 64), card.Size);
 
         card.Resize(new Size(300, 120));

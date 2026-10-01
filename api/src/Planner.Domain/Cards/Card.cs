@@ -48,13 +48,15 @@ public sealed partial class Card {
     public CardProperties Properties { get; private set; }
 
     /// <summary>Cria um cartão na raiz do quadro de uma categoria.</summary>
-    public static Card Create(Guid categoryId, string title) =>
-        new(Guid.CreateVersion7(), categoryId, parentId: null, NormalizeTitle(title));
+    /// <param name="id">Escolhido pelo cliente (UUID v7), o que torna a criação idempotente.</param>
+    public static Card Create(Guid id, Guid categoryId, string title) =>
+        new(EntityId.Require(id), categoryId, parentId: null, NormalizeTitle(title));
 
     /// <summary>Cria um cartão dentro do quadro de outro cartão, na mesma categoria dele.</summary>
-    public static Card CreateInside(Card parent, string title) {
+    /// <param name="id">Escolhido pelo cliente (UUID v7), o que torna a criação idempotente.</param>
+    public static Card CreateInside(Guid id, Card parent, string title) {
         ArgumentNullException.ThrowIfNull(parent);
-        return new(Guid.CreateVersion7(), parent.CategoryId, parent.Id, NormalizeTitle(title));
+        return new(EntityId.Require(id), parent.CategoryId, parent.Id, NormalizeTitle(title));
     }
 
     public void Rename(string title) => Title = NormalizeTitle(title);
