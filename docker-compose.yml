@@ -4,6 +4,8 @@ name: planner
 services:
   postgres:
     image: postgres:18
+    # Volta sozinho quando o Docker liga (ex.: depois de reiniciar o PC), a não ser que tenha sido parado de propósito.
+    restart: unless-stopped
     environment:
       POSTGRES_DB: planner
       POSTGRES_USER: planner
