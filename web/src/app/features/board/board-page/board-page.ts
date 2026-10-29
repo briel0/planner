@@ -1,10 +1,23 @@
-import { Component, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+  viewChild,
+} from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatTooltip } from '@angular/material/tooltip';
 import { Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { ContentDoc } from '../../../core/content/card-content';
 import { Card, CardChanges, Position, Size } from '../../../core/data/models';
 import { Notifier } from '../../../core/feedback/notifier';
@@ -12,11 +25,14 @@ import { confirmAction } from '../../../shared/ui/confirm-dialog/confirm-dialog'
 import { CategoriesStore } from '../../categories/categories-store';
 import { BoardStore } from '../board-store';
 import { CardKeyAction, CardView } from '../card-view/card-view';
+import { MoveCardDialog, MoveCardDialogData, MoveCardResult } from '../move-card-dialog/move-card-dialog';
 import { trackPointer } from '../viewport/track-pointer';
 import { DEFAULT_VIEWPORT, Viewport, fitToCards, screenToCanvas, zoomAt } from '../viewport/viewport';
 import { ViewportMemory } from '../viewport/viewport-memory';
 
 const NEW_CARD_TITLE = 'Novo cartão';
+/** Intervalo mínimo entre duas atualizações ao voltar para a janela (focus e visibilitychange chegam juntos). */
+const REFRESH_MIN_INTERVAL_MS = 2000;
 /** Metade do tamanho de um cartão novo, para centralizá-lo no ponto escolhido. */
 const CARD_HALF = { width: 104, height: 32 };
 
@@ -83,6 +99,35 @@ export class BoardPage {
     });
     // A aba da categoria fica destacada também dentro dos quadros dos cartões.
     effect(() => this.categories.activeCategoryId.set(this.store.categoryId()));
+    this.refreshOnReturn();
+  }
+
+  /**
+   * Ao voltar para a janela, busca de novo as abas e o quadro: o que mudou fora dela (outra aba, um agente criando
+   * cartões pela API) aparece sem F5. Não atualiza no meio de uma edição, e no máximo uma vez a cada poucos segundos.
+   */
+  private refreshOnReturn(): void {
+    const doc = inject(DOCUMENT);
+    const win = doc.defaultView;
+    let last = Date.now();
+    const refresh = (): void => {
+      const busy =
+        this.editingId() !== null ||
+        this.editingDescriptionId() !== null ||
+        [...this.textSaveStates().values()].includes('saving');
+      if (doc.visibilityState !== 'visible' || busy || Date.now() - last < REFRESH_MIN_INTERVAL_MS) {
+        return;
+      }
+      last = Date.now();
+      void this.categories.load().catch(() => undefined);
+      void this.store.refresh().catch(() => undefined); // sem rede: fica o quadro que já está na tela
+    };
+    doc.addEventListener('visibilitychange', refresh);
+    win?.addEventListener('focus', refresh);
+    inject(DestroyRef).onDestroy(() => {
+      doc.removeEventListener('visibilitychange', refresh);
+      win?.removeEventListener('focus', refresh);
+    });
   }
 
   // ---- Criar -----------------------------------------------------------------------------------------------
@@ -333,7 +378,29 @@ export class BoardPage {
     await this.run(() => this.store.setProperties(card.id, { ...card.properties, done }));
   }
 
-  /** Apagar pede confirmação só quando o cartão tem outros dentro. */
+  /** Abre o seletor de destino e move o cartão (com o que está dentro dele) para lá. */
+  protected async moveCard(card: Card): Promise<void> {
+    const ref = this.dialog.open<MoveCardDialog, MoveCardDialogData, MoveCardResult>(MoveCardDialog, {
+      data: { card },
+      width: '28rem',
+    });
+    const result = await firstValueFrom(ref.afterClosed());
+    if (!result) {
+      return;
+    }
+    try {
+      await this.store.moveTo(card.id, result.location, result.position);
+      this.selectedId.set(null);
+      this.notifier.info(`"${card.title}" movido.`);
+    } catch (error) {
+      this.notifier.error(error);
+    }
+  }
+
+  /**
+   * Um cartão com outros dentro pede confirmação antes (o que está dentro não teria como voltar). Um cartão sem
+   * nada dentro é apagado na hora, com um "Desfazer" no aviso: errar o Delete não custa a descrição.
+   */
   protected async delete(card: Card): Promise<void> {
     if (card.childCount > 0) {
       const confirmed = await confirmAction(this.dialog, {
@@ -345,8 +412,21 @@ export class BoardPage {
         return;
       }
     }
-    await this.run(() => this.store.delete(card.id));
+    try {
+      await this.store.delete(card.id);
+    } catch (error) {
+      this.notifier.error(error);
+      return;
+    }
     this.selectedId.set(null);
+    if (card.childCount === 0 && (await this.notifier.offerUndo(`"${card.title}" apagado.`))) {
+      try {
+        const restored = await this.store.restore(card);
+        this.selectedId.set(restored.id);
+      } catch (error) {
+        this.notifier.error(error);
+      }
+    }
   }
 
   // ---- Apoio -----------------------------------------------------------------------------------------------

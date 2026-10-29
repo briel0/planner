@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { FakePlannerData } from '../../core/data/fake-planner-data';
+import { newId } from '../../core/data/ids';
 import { PlannerData, PlannerDataError } from '../../core/data/planner-data';
 import { BoardStore } from './board-store';
 
@@ -72,5 +73,73 @@ describe('BoardStore', () => {
     await slow;
 
     expect(store.cards().map((c) => c.title)).toEqual(['Deploy']);
+  });
+
+  it('moves a card with everything inside it to another category', async () => {
+    const fisica = titled('Física Quântica');
+    const [, trabalho] = await data.listCategories();
+
+    await store.moveTo(fisica.id, { categoryId: trabalho.id }, { x: 24, y: 300 });
+
+    expect(store.cards().map((c) => c.id)).not.toContain(fisica.id);
+    const moved = await data.getCard(fisica.id);
+    expect(moved).toMatchObject({ categoryId: trabalho.id, parentId: null, position: { x: 24, y: 300 } });
+    expect((await data.listChildren(fisica.id)).every((c) => c.categoryId === trabalho.id)).toBe(true);
+  });
+
+  it('refuses to move a card into something inside it', async () => {
+    const fisica = titled('Física Quântica');
+    const [lista] = await data.listChildren(fisica.id);
+
+    await expect(store.moveTo(fisica.id, { parentId: lista.id }, { x: 0, y: 0 })).rejects.toMatchObject({
+      code: 'card.cycle',
+    });
+    expect(store.cards().map((c) => c.id)).toContain(fisica.id);
+  });
+
+  it('restores a deleted card with its content', async () => {
+    const aed = titled('AED');
+    const content = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Revisar' }] }] };
+    await data.updateCard(aed.id, { color: '#ffcc00', content, properties: { done: true } });
+    await store.openCategory(aed.categoryId);
+    const before = titled('AED');
+
+    await store.delete(aed.id);
+    const restored = await store.restore(before);
+
+    expect(titled('AED')).toEqual(restored);
+    expect(restored).toMatchObject({
+      color: '#ffcc00',
+      content,
+      properties: { done: true },
+      position: before.position,
+      size: before.size,
+    });
+  });
+
+  it('refreshes silently, picking up cards created elsewhere', async () => {
+    const statuses: string[] = [];
+    const category = titled('AED').categoryId;
+    await data.createCard(
+      { categoryId: category },
+      { id: newId(), title: 'Veio do Telegram', position: { x: 0, y: 0 } },
+    );
+
+    const refreshing = store.refresh();
+    statuses.push(store.status());
+    await refreshing;
+
+    expect(statuses).toEqual(['ready']);
+    expect(titled('Veio do Telegram')).toBeTruthy();
+  });
+
+  it('keeps the board on screen when a silent refresh fails', async () => {
+    const titles = store.cards().map((c) => c.title);
+    vi.spyOn(data, 'listRootCards').mockRejectedValue(new PlannerDataError('network', 0, 'offline'));
+
+    await expect(store.refresh()).rejects.toBeInstanceOf(PlannerDataError);
+
+    expect(store.status()).toBe('ready');
+    expect(store.cards().map((c) => c.title)).toEqual(titles);
   });
 });

@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { firstValueFrom } from 'rxjs';
 import { PlannerDataError } from '../data/planner-data';
 
 /** Mensagens em português para cada código de erro estável da API (docs/api-design.md, seção Errors). */
@@ -31,5 +32,15 @@ export class Notifier {
     if (!(error instanceof PlannerDataError)) {
       console.error(error);
     }
+  }
+
+  info(message: string): void {
+    this.snackBar.open(message, 'OK', { duration: 4000, horizontalPosition: 'end' });
+  }
+
+  /** Aviso com o botão "Desfazer"; resolve `true` se ele for clicado antes de o aviso sumir. */
+  async offerUndo(message: string): Promise<boolean> {
+    const ref = this.snackBar.open(message, 'Desfazer', { duration: 6000, horizontalPosition: 'end' });
+    return (await firstValueFrom(ref.afterDismissed())).dismissedByAction;
   }
 }

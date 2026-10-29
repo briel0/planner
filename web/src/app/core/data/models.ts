@@ -77,6 +77,8 @@ export interface CardDetails extends Card {
 export type CardLocation = { categoryId: string } | { parentId: string };
 
 export interface CardChanges {
+  /** Move o cartão para a raiz de uma categoria ou para dentro de outro cartão (levando o que está dentro dele). */
+  location?: CardLocation;
   title?: string;
   color?: string;
   position?: Position;

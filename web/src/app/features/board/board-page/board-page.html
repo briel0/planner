@@ -114,6 +114,7 @@
       <mat-icon>open_in_new</mat-icon><span>Abrir</span>
     </button>
     <button mat-menu-item (click)="onKeyAction(card, 'rename')"><mat-icon>edit</mat-icon><span>Renomear</span></button>
+    <button mat-menu-item (click)="moveCard(card)"><mat-icon>drive_file_move</mat-icon><span>Mover para…</span></button>
     <button mat-menu-item (click)="editDescription(card)">
       <mat-icon>notes</mat-icon><span>{{ card.content ? 'Editar descrição' : 'Adicionar descrição' }}</span>
     </button>

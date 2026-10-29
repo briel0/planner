@@ -22,18 +22,26 @@ export class BoardStore {
   /** Descarta respostas de um quadro anterior quando a navegação é mais rápida que o carregamento. */
   private request = 0;
 
-  async openCategory(categoryId: string): Promise<void> {
-    await this.open({ categoryId }, async () => {
-      const cards = await this.data.listRootCards(categoryId);
-      return { cards, categoryId, trail: [] };
-    });
+  async openCategory(categoryId: string, silent = false): Promise<void> {
+    await this.open(
+      { categoryId },
+      async () => {
+        const cards = await this.data.listRootCards(categoryId);
+        return { cards, categoryId, trail: [] };
+      },
+      silent,
+    );
   }
 
-  async openCard(cardId: string): Promise<void> {
-    await this.open({ parentId: cardId }, async () => {
-      const [card, cards] = await Promise.all([this.data.getCard(cardId), this.data.listChildren(cardId)]);
-      return { cards, categoryId: card.categoryId, trail: [...card.ancestors, { id: card.id, title: card.title }] };
-    });
+  async openCard(cardId: string, silent = false): Promise<void> {
+    await this.open(
+      { parentId: cardId },
+      async () => {
+        const [card, cards] = await Promise.all([this.data.getCard(cardId), this.data.listChildren(cardId)]);
+        return { cards, categoryId: card.categoryId, trail: [...card.ancestors, { id: card.id, title: card.title }] };
+      },
+      silent,
+    );
   }
 
   async create(title: string, position: Position): Promise<Card> {
@@ -78,13 +86,52 @@ export class BoardStore {
     this.cards.update((list) => list.filter((c) => c.id !== id));
   }
 
+  /**
+   * O "Desfazer" de apagar: recria o cartão no quadro onde ele estava, com o mesmo conteúdo (num id novo). Só serve
+   * para cartões sem nada dentro: o que estava dentro de um cartão apagado não volta.
+   */
+  async restore(card: Card): Promise<Card> {
+    const location: CardLocation = card.parentId ? { parentId: card.parentId } : { categoryId: card.categoryId };
+    const created = await this.data.createCard(location, { id: newId(), title: card.title, position: card.position });
+    const restored = await this.data.updateCard(created.id, {
+      color: card.color,
+      size: card.size,
+      descriptionFontSize: card.descriptionFontSize,
+      properties: card.properties,
+      content: card.content,
+    });
+    if (sameLocation(this.location, location)) {
+      this.cards.update((list) => [...list, restored]);
+    }
+    return restored;
+  }
+
+  /** Move o cartão para outro quadro (com o que está dentro dele); aqui ele simplesmente sai da tela. */
+  async moveTo(id: string, location: CardLocation, position: Position): Promise<void> {
+    await this.data.updateCard(id, { location, position });
+    this.cards.update((list) => list.filter((c) => c.id !== id));
+  }
+
+  /**
+   * Busca de novo o quadro aberto sem mostrar "carregando": traz o que mudou fora desta tela (outra aba, um agente
+   * criando cartões pela API).
+   */
+  async refresh(): Promise<void> {
+    if (this.status() === 'ready') {
+      await this.reload(true);
+    }
+  }
+
   private async open(
     location: CardLocation,
     load: () => Promise<{ cards: Card[]; categoryId: string; trail: CardRef[] }>,
+    silent = false,
   ): Promise<void> {
     const request = ++this.request;
     this.location = location;
-    this.status.set('loading');
+    if (!silent) {
+      this.status.set('loading');
+    }
     try {
       const board = await load();
       if (request !== this.request) {
@@ -95,7 +142,8 @@ export class BoardStore {
       this.trail.set(board.trail);
       this.status.set('ready');
     } catch (error) {
-      if (request === this.request) {
+      // Numa atualização silenciosa, uma falha (ex.: sem rede) mantém o quadro que já está na tela.
+      if (request === this.request && !silent) {
         this.cards.set([]);
         this.status.set('not-found');
       }
@@ -133,9 +181,11 @@ export class BoardStore {
     }
   }
 
-  private async reload(): Promise<void> {
+  private async reload(silent = false): Promise<void> {
     const location = this.requireLocation();
-    await ('parentId' in location ? this.openCard(location.parentId) : this.openCategory(location.categoryId));
+    await ('parentId' in location
+      ? this.openCard(location.parentId, silent)
+      : this.openCategory(location.categoryId, silent));
   }
 
   private replace(id: string, update: (card: Card) => Card): void {
@@ -148,4 +198,14 @@ export class BoardStore {
     }
     return this.location;
   }
+}
+
+/** Se dois lugares são o mesmo quadro. */
+export function sameLocation(a: CardLocation | null, b: CardLocation | null): boolean {
+  if (!a || !b) {
+    return false;
+  }
+  return 'parentId' in a
+    ? 'parentId' in b && a.parentId === b.parentId
+    : 'categoryId' in b && a.categoryId === b.categoryId;
 }

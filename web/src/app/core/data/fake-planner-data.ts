@@ -133,8 +133,10 @@ export class FakePlannerData extends PlannerData {
     if (ifMatch !== undefined && ifMatch !== card.version) {
       throw new PlannerDataError('concurrency.stale', 412, 'The card changed since the given version.');
     }
+    const destination = changes.location === undefined ? null : this.resolveMove(card, changes.location);
     const updated: StoredCard = {
       ...card,
+      ...(destination ?? {}),
       title: changes.title === undefined ? card.title : this.validateTitle(changes.title),
       color: changes.color === undefined ? card.color : this.validateColor(changes.color),
       position: changes.position === undefined ? card.position : this.validatePosition(changes.position),
@@ -149,7 +151,48 @@ export class FakePlannerData extends PlannerData {
       version: nextVersion(),
     };
     this.cards = this.cards.map((c) => (c.id === id ? updated : c));
+    if (destination && destination.categoryId !== card.categoryId) {
+      // O que está dentro do cartão vai junto para a categoria nova.
+      const inside = this.descendantIds(id);
+      this.cards = this.cards.map((c) => (inside.has(c.id) ? { ...c, categoryId: destination.categoryId } : c));
+    }
     return this.toCard(updated);
+  }
+
+  /** Destino de um "mover": barra mover um cartão para dentro dele mesmo ou de algo que está dentro dele. */
+  private resolveMove(card: StoredCard, location: CardLocation): Pick<StoredCard, 'categoryId' | 'parentId' | 'layer'> {
+    let categoryId: string;
+    let parentId: string | null;
+    if ('parentId' in location) {
+      const parent = this.findCard(location.parentId);
+      if (parent.id === card.id || this.descendantIds(card.id).has(parent.id)) {
+        throw new PlannerDataError('card.cycle', 409, 'A card cannot be moved into itself or its descendants.');
+      }
+      categoryId = parent.categoryId;
+      parentId = parent.id;
+    } else {
+      categoryId = this.requireCategory(location.categoryId);
+      parentId = null;
+    }
+    const siblings = this.cards.filter(
+      (c) => c.id !== card.id && c.categoryId === categoryId && c.parentId === parentId,
+    );
+    return { categoryId, parentId, layer: Math.max(-1, ...siblings.map((c) => c.layer)) + 1 };
+  }
+
+  /** Ids de tudo o que está dentro do cartão, em qualquer profundidade. */
+  private descendantIds(id: string): Set<string> {
+    const found = new Set<string>();
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const c of this.cards) {
+        if (c.parentId && (c.parentId === id || found.has(c.parentId)) && !found.has(c.id)) {
+          found.add(c.id);
+          grew = true;
+        }
+      }
+    }
+    return found;
   }
 
   async deleteCard(id: string): Promise<void> {
