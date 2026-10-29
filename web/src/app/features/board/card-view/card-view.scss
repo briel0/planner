@@ -31,14 +31,69 @@
   }
 }
 
-// O canto inferior direito: aparece ao passar o mouse sobre o cartão.
+// Bordas e cantos são áreas invisíveis: só o cursor muda ao passar por cima.
 .resize-handle {
   position: absolute;
-  right: 0;
+  touch-action: none;
+}
+
+.n,
+.s {
+  right: 1rem;
+  left: 1rem;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.e,
+.w {
+  top: 1rem;
+  bottom: 1rem;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.n,
+.ne,
+.nw {
+  top: 0;
+}
+
+.s,
+.se,
+.sw {
   bottom: 0;
+}
+
+.e,
+.ne,
+.se {
+  right: 0;
+}
+
+.w,
+.nw,
+.sw {
+  left: 0;
+}
+
+.ne,
+.sw {
+  cursor: nesw-resize;
+}
+
+.nw,
+.se {
+  cursor: nwse-resize;
+}
+
+.corner {
   width: 1rem;
   height: 1rem;
-  cursor: nwse-resize;
+}
+
+// Só o canto inferior direito tem uma marca visível (os traços de sempre), ao passar o mouse.
+.se {
   opacity: 0;
   background: linear-gradient(
     135deg,
@@ -48,17 +103,11 @@
     currentColor 70% 80%,
     transparent 80%
   );
-  transition: opacity 120ms ease;
 
   :host(:hover) &,
-  :host(.resizing) &,
   :host(.selected) & {
     opacity: 0.5;
   }
-}
-
-:host(.resizing) {
-  cursor: nwse-resize;
 }
 
 // Ampliação temporária: não altera o tamanho persistido do cartão.

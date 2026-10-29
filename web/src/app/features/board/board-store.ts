@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Card, CardChanges, CardLocation, CardRef, Position, Size } from '../../core/data/models';
+import { CardBounds } from '../../core/data/card-size';
+import { Card, CardChanges, CardLocation, CardRef, Position } from '../../core/data/models';
 import { newId } from '../../core/data/ids';
 import { PlannerData, PlannerDataError } from '../../core/data/planner-data';
 
@@ -76,9 +77,9 @@ export class BoardStore {
     await this.optimistic(id, { position });
   }
 
-  /** Redimensionar também é otimista, pelo mesmo motivo. */
-  async resize(id: string, size: Size): Promise<void> {
-    await this.optimistic(id, { size });
+  /** Redimensionar também é otimista; posição e tamanho vão juntos (as bordas de cima e da esquerda movem o cartão). */
+  async resize(id: string, bounds: CardBounds): Promise<void> {
+    await this.optimistic(id, bounds);
   }
 
   async delete(id: string): Promise<void> {

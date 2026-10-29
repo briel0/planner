@@ -13,9 +13,9 @@ import {
 import { Editor } from '@tiptap/core';
 import { MatIcon } from '@angular/material/icon';
 import { CARD_CONTENT_EXTENSIONS, ContentDoc, isEmptyContent, renderContent } from '../../../core/content/card-content';
-import { clampSize } from '../../../core/data/card-size';
+import { CardBounds, ResizeDirection, resizeBounds } from '../../../core/data/card-size';
 import { DESCRIPTION_FONT } from '../../../core/data/description-font';
-import { Card, Position, Size } from '../../../core/data/models';
+import { Card, Position } from '../../../core/data/models';
 import { readableTextColor } from '../../../shared/ui/color/readable-text-color';
 import { trackPointer } from '../viewport/track-pointer';
 
@@ -39,7 +39,7 @@ export type CardKeyAction = 'open' | 'rename' | 'delete';
     '[style.background-color]': 'displayColor()',
     '[style.width.px]': 'size().width',
     '[style.height.px]': 'size().height',
-    '[class.resizing]': 'liveSize() !== null',
+    '[class.resizing]': 'liveBounds() !== null',
     '[class.dragging]': 'dragOffset() !== null',
     '[class.editing-description]': 'editingDescription()',
     '[style.--description-font-size]': 'card().descriptionFontSize + "px"',
@@ -70,13 +70,14 @@ export class CardView {
   readonly menuRequested = output<MouseEvent>();
   readonly renamed = output<string>();
   readonly renameCancelled = output<void>();
-  readonly resized = output<Size>();
+  readonly resized = output<CardBounds>();
   readonly moved = output<Position>();
   readonly descriptionEditRequested = output<void>();
   /** Fim da edição da descrição: o documento novo, ou nulo se ficou vazio. */
   readonly descriptionChanged = output<ContentDoc | null>();
   readonly descriptionFontSizeChanged = output<number>();
   protected readonly descriptionFont = DESCRIPTION_FONT;
+  protected readonly resizeDirections: readonly ResizeDirection[] = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
 
   protected adjustDescriptionFontSize(direction: number): void {
     const next = Math.max(
@@ -90,15 +91,19 @@ export class CardView {
 
   /** Deslocamento durante o arrastar (antes de soltar), em pixels da tela; nulo no resto do tempo. */
   protected readonly dragOffset = signal<Position | null>(null);
+  /** Posição e tamanho durante o redimensionamento (antes de soltar); nulo no resto do tempo. */
+  protected readonly liveBounds = signal<CardBounds | null>(null);
+
   protected readonly position = computed(() => {
+    const live = this.liveBounds();
+    if (live) {
+      return live.position;
+    }
     const offset = this.dragOffset();
     const { x, y } = this.card().position;
     return offset ? { x: x + offset.x / this.zoom(), y: y + offset.y / this.zoom() } : { x, y };
   });
-
-  /** Tamanho durante o redimensionamento (antes de soltar); nulo no resto do tempo. */
-  protected readonly liveSize = signal<Size | null>(null);
-  protected readonly size = computed(() => this.liveSize() ?? this.card().size);
+  protected readonly size = computed(() => this.liveBounds()?.size ?? this.card().size);
 
   protected readonly displayColor = computed(() => this.previewColor() ?? this.card().color);
   protected readonly textColor = computed(() => readableTextColor(this.displayColor()));
@@ -226,24 +231,25 @@ export class CardView {
     });
   }
 
-  /** Arrastar o canto inferior direito redimensiona; o tamanho final só é avisado (e salvo) ao soltar. */
-  protected startResize(event: PointerEvent): void {
+  /**
+   * Arrastar uma borda ou canto redimensiona (pelas de cima e da esquerda, o cartão também se move); o resultado só é
+   * avisado (e salvo) ao soltar.
+   */
+  protected startResize(event: PointerEvent, direction: ResizeDirection): void {
     event.preventDefault();
     event.stopPropagation(); // não arrasta o cartão nem o canvas
-    const start = this.card().size;
+    const start: CardBounds = { position: this.card().position, size: this.card().size };
     trackPointer(
       event,
       {
         move: (dx, dy) =>
-          this.liveSize.set(
-            clampSize({ width: start.width + dx / this.zoom(), height: start.height + dy / this.zoom() }),
-          ),
+          this.liveBounds.set(resizeBounds(start, direction, { x: dx / this.zoom(), y: dy / this.zoom() })),
         end: (moved) => {
-          const size = this.liveSize();
-          if (moved && size) {
-            this.resized.emit(size);
+          const bounds = this.liveBounds();
+          if (moved && bounds) {
+            this.resized.emit(bounds);
           }
-          this.liveSize.set(null);
+          this.liveBounds.set(null);
         },
       },
       0,

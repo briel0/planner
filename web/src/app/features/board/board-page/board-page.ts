@@ -19,7 +19,8 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ContentDoc } from '../../../core/content/card-content';
-import { Card, CardChanges, Position, Size } from '../../../core/data/models';
+import { CardBounds } from '../../../core/data/card-size';
+import { Card, CardChanges, Position } from '../../../core/data/models';
 import { Notifier } from '../../../core/feedback/notifier';
 import { confirmAction } from '../../../shared/ui/confirm-dialog/confirm-dialog';
 import { CategoriesStore } from '../../categories/categories-store';
@@ -315,8 +316,8 @@ export class BoardPage {
     }
   }
 
-  protected async onResized(card: Card, size: Size): Promise<void> {
-    await this.run(() => this.store.resize(card.id, size));
+  protected async onResized(card: Card, bounds: CardBounds): Promise<void> {
+    await this.run(() => this.store.resize(card.id, bounds));
   }
 
   // ---- Menu do botão direito -------------------------------------------------------------------------------

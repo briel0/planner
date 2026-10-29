@@ -1,3 +1,14 @@
+<!-- Alças de redimensionar: as quatro bordas (faixas finas ao longo do lado) e os quatro cantos. Vêm primeiro para
+     que os controles posicionados (fonte, "Salvo") fiquem por cima delas onde se encostam. -->
+@for (direction of resizeDirections; track direction) {
+  <span
+    class="resize-handle {{ direction }}"
+    aria-hidden="true"
+    [class.corner]="direction.length === 2"
+    (pointerdown)="startResize($event, direction)"
+  ></span>
+}
+
 <div class="font-controls" role="group" aria-label="Tamanho da fonte da descrição">
   <button
     type="button"
@@ -80,9 +91,6 @@
     }
   </div>
 }
-
-<!-- Alça de redimensionar: o canto inferior direito. -->
-<span class="resize-handle" aria-hidden="true" (pointerdown)="startResize($event)"></span>
 
 @if (due() || card().properties.done || card().childCount > 0) {
   <div class="meta">
