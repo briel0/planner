@@ -88,4 +88,19 @@ describe('CardView', () => {
     expect(element.style.backgroundColor).not.toBe('rgb(255, 255, 255)');
     expect(card.color).toBe(originalColor);
   });
+
+  it('offers an explicit description action and expands only while editing', () => {
+    const edit = vi.fn();
+    fixture.componentInstance.descriptionEditRequested.subscribe(edit);
+    const placeholder = element.querySelector('.description-placeholder') as HTMLButtonElement;
+    placeholder.click();
+    expect(edit).toHaveBeenCalledOnce();
+
+    const size = { ...card.size };
+    fixture.componentRef.setInput('editingDescription', true);
+    fixture.detectChanges();
+    expect(element.classList.contains('editing-description')).toBe(true);
+    expect(element.querySelector('.editor-actions button')?.textContent).toContain('Concluir');
+    expect(card.size).toEqual(size);
+  });
 });

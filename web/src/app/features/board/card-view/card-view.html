@@ -34,13 +34,51 @@
     (blur)="commit(titleInput.value)"
   />
 } @else {
-  <span class="title">{{ card().title }}</span>
+  <span class="title" title="Duplo clique para abrir o quadro. F2 para renomear.">{{ card().title }}</span>
 }
 
 @if (editingDescription()) {
-  <div #editorHost class="card-description editing"></div>
+  <div #editorHost class="card-description editing" (wheel)="$event.stopPropagation()"></div>
+  <div class="editor-actions">
+    <button type="button" (pointerdown)="$event.preventDefault()" (click)="finishEditor()">Concluir</button>
+    <span class="editor-hint">Clique fora ou use <kbd>Esc</kbd> para salvar</span>
+  </div>
 } @else if (descriptionHtml(); as html) {
-  <div class="card-description" [innerHTML]="html"></div>
+  <div
+    class="card-description"
+    title="Arraste para mover. Duplo clique para editar a descrição."
+    [innerHTML]="html"
+  ></div>
+} @else {
+  <button
+    type="button"
+    class="description-placeholder"
+    title="Adicionar uma descrição ao cartão"
+    [disabled]="textSaveState() === 'saving'"
+    (click)="$event.stopPropagation(); descriptionEditRequested.emit()"
+  >
+    Adicionar descrição
+  </button>
+}
+
+@if (
+  !editingDescription() &&
+  (textSaveState() === 'saving' || textSaveState() === 'error' || (selected() && textSaveState() === 'saved'))
+) {
+  <div class="save-feedback" role="status" aria-live="polite">
+    @switch (textSaveState()) {
+      @case ('saving') {
+        <span>Salvando…</span>
+      }
+      @case ('saved') {
+        <span>✓ Salvo</span>
+      }
+      @case ('error') {
+        <span>Não salvo</span>
+        <button type="button" (click)="$event.stopPropagation(); retrySaveRequested.emit()">Tentar novamente</button>
+      }
+    }
+  </div>
 }
 
 <!-- Alça de redimensionar: o canto inferior direito. -->

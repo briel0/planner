@@ -61,11 +61,108 @@
   cursor: nwse-resize;
 }
 
+// Ampliação temporária: não altera o tamanho persistido do cartão.
+:host(.editing-description) {
+  min-width: 340px;
+  min-height: 240px;
+  z-index: 100001 !important;
+  cursor: default;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 20%);
+
+  .resize-handle {
+    display: none;
+  }
+}
+
+.description-placeholder {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: none;
+  opacity: 0.55;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 1;
+    text-decoration: underline;
+  }
+}
+
+.editor-actions,
+.save-feedback {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 11px;
+
+  button {
+    padding: 0.25rem 0.4rem;
+    border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+    border-radius: 4px;
+    color: inherit;
+    background: color-mix(in srgb, currentColor 6%, transparent);
+    font: inherit;
+    cursor: pointer;
+  }
+}
+
+.editor-actions {
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+
+  button {
+    min-width: 96px;
+    padding: 0.4rem 1rem;
+    font-size: 12px;
+    font-weight: 600;
+
+    &:hover {
+      background: color-mix(in srgb, currentColor 12%, transparent);
+    }
+  }
+}
+
+.editor-hint {
+  text-align: center;
+  line-height: 1.6;
+  color: color-mix(in srgb, currentColor 65%, transparent);
+
+  kbd {
+    display: inline-block;
+    margin: 0 2px;
+    padding: 0 4px;
+    border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    font: inherit;
+    font-size: 10px;
+  }
+}
+
+.save-feedback {
+  position: absolute;
+  right: 18px;
+  bottom: 3px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: inherit;
+}
+
 // Enquanto é arrastado.
 :host(.dragging) {
   z-index: 100000 !important; // por cima de todos durante o arrastar
   cursor: grabbing;
   box-shadow: 0 8px 20px rgb(0 0 0 / 20%);
+
+  .card-description {
+    cursor: grabbing;
+  }
 }
 
 .title {

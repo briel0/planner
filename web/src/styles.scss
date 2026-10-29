@@ -60,7 +60,7 @@ body {
   overflow: hidden;
   font-size: var(--description-font-size, 14px);
   line-height: 1.4;
-  cursor: text;
+  cursor: grab;
 
   p {
     margin: 0 0 0.25rem;
@@ -81,7 +81,7 @@ body {
     border-radius: 5px;
     background: color-mix(in srgb, currentColor 4%, transparent);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 18%, transparent);
-    cursor: auto;
+    cursor: text;
 
     .ProseMirror {
       box-sizing: border-box;

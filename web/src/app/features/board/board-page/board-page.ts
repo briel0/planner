@@ -6,7 +6,7 @@ import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatTooltip } from '@angular/material/tooltip';
 import { Router, RouterLink } from '@angular/router';
 import { ContentDoc } from '../../../core/content/card-content';
-import { Card, Position, Size } from '../../../core/data/models';
+import { Card, CardChanges, Position, Size } from '../../../core/data/models';
 import { Notifier } from '../../../core/feedback/notifier';
 import { confirmAction } from '../../../shared/ui/confirm-dialog/confirm-dialog';
 import { CategoriesStore } from '../../categories/categories-store';
@@ -48,6 +48,14 @@ export class BoardPage {
   protected readonly editingId = signal<string | null>(null);
   protected readonly editingDescriptionId = signal<string | null>(null);
   protected readonly savingFontSizeIds = signal<ReadonlySet<string>>(new Set());
+  protected readonly textSaveStates = signal<ReadonlyMap<string, 'saving' | 'saved' | 'error'>>(new Map());
+  private readonly textDrafts = signal<ReadonlyMap<string, Pick<CardChanges, 'title' | 'content'>>>(new Map());
+  protected readonly displayCards = computed(() =>
+    this.store.cards().map((card) => {
+      const draft = this.textDrafts().get(card.id);
+      return draft ? { ...card, ...draft } : card;
+    }),
+  );
   protected readonly menuCard = signal<Card | null>(null);
   protected readonly colorPreview = signal<{ id: string; color: string } | null>(null);
   protected readonly menuPosition = signal<Position>({ x: 0, y: 0 });
@@ -112,6 +120,9 @@ export class BoardPage {
         await this.router.navigate(['/cards', card.id]);
         break;
       case 'rename':
+        if (this.textSaveStates().get(card.id) === 'saving') {
+          return;
+        }
         this.editingId.set(card.id);
         break;
       case 'delete':
@@ -122,10 +133,10 @@ export class BoardPage {
 
   protected async onRenamed(card: Card, title: string): Promise<void> {
     this.editingId.set(null);
-    if (title.trim() === card.title) {
+    if (title.trim() === card.title && this.textSaveStates().get(card.id) !== 'error') {
       return;
     }
-    await this.run(() => this.store.rename(card.id, title));
+    await this.saveText(card.id, { title });
   }
 
   protected cancelRename(): void {
@@ -204,14 +215,46 @@ export class BoardPage {
   }
 
   protected editDescription(card: Card): void {
+    if (this.textSaveStates().get(card.id) === 'saving') {
+      return;
+    }
     this.selectedId.set(card.id);
     this.editingDescriptionId.set(card.id);
   }
 
   protected async onDescriptionChanged(card: Card, content: ContentDoc | null): Promise<void> {
     this.editingDescriptionId.set(null);
-    if (JSON.stringify(content) !== JSON.stringify(card.content)) {
-      await this.run(() => this.store.changeContent(card.id, content));
+    if (JSON.stringify(content) !== JSON.stringify(card.content) || this.textSaveStates().get(card.id) === 'error') {
+      await this.saveText(card.id, { content });
+    }
+  }
+
+  protected async retryTextSave(id: string): Promise<void> {
+    const draft = this.textDrafts().get(id);
+    if (draft) {
+      await this.saveText(id, draft);
+    }
+  }
+
+  /** Mantém o rascunho visível até a API confirmar; falhas nunca descartam o texto. */
+  private async saveText(id: string, changes: Pick<CardChanges, 'title' | 'content'>): Promise<void> {
+    if (this.textSaveStates().get(id) === 'saving') {
+      return;
+    }
+    const draft = { ...this.textDrafts().get(id), ...changes };
+    this.textDrafts.update((drafts) => new Map(drafts).set(id, draft));
+    this.textSaveStates.update((states) => new Map(states).set(id, 'saving'));
+    try {
+      await this.store.saveText(id, draft);
+      this.textDrafts.update((drafts) => {
+        const next = new Map(drafts);
+        next.delete(id);
+        return next;
+      });
+      this.textSaveStates.update((states) => new Map(states).set(id, 'saved'));
+    } catch (error) {
+      this.textSaveStates.update((states) => new Map(states).set(id, 'error'));
+      this.notifier.error(error);
     }
   }
 

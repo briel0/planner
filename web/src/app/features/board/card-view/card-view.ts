@@ -60,6 +60,8 @@ export class CardView {
   /** A descrição está sendo editada (no lugar dela aparece o editor). */
   readonly editingDescription = input(false);
   readonly fontSizeSaving = input(false);
+  readonly textSaveState = input<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  readonly retrySaveRequested = output<void>();
   /** Zoom atual do canvas: os gestos do mouse (em pixels da tela) são divididos por ele. */
   readonly zoom = input(1);
 
@@ -148,7 +150,7 @@ export class CardView {
   }
 
   /** Sair do editor (clicar fora ou Esc) salva. */
-  private finishEditor(): void {
+  protected finishEditor(): void {
     const editor = this.editor;
     if (!editor) {
       return;
@@ -167,7 +169,12 @@ export class CardView {
   protected onDoubleClick(event: MouseEvent): void {
     event.stopPropagation(); // não cria um cartão novo pelo canvas
     const target = event.target as HTMLElement;
-    if (this.editing() || this.editingDescription() || target.closest('.resize-handle, .font-controls')) {
+    if (
+      this.editing() ||
+      this.editingDescription() ||
+      this.textSaveState() === 'saving' ||
+      target.closest('.resize-handle, button')
+    ) {
       return;
     }
     if (target.closest('.title')) {

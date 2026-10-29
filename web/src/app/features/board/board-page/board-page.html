@@ -51,7 +51,7 @@
           'translate(' + viewport().pan.x + 'px, ' + viewport().pan.y + 'px) scale(' + viewport().zoom + ')'
         "
       >
-        @for (card of store.cards(); track card.id) {
+        @for (card of displayCards(); track card.id) {
           <app-card-view
             [style.z-index]="card.layer"
             [card]="card"
@@ -61,6 +61,8 @@
             [editing]="editingId() === card.id"
             [editingDescription]="editingDescriptionId() === card.id"
             [fontSizeSaving]="savingFontSizeIds().has(card.id)"
+            [textSaveState]="textSaveStates().get(card.id) ?? 'idle'"
+            (retrySaveRequested)="retryTextSave(card.id)"
             (moved)="onMoved(card, $event)"
             (selectedChange)="selectedId.set(card.id)"
             (keyAction)="onKeyAction(card, $event)"

@@ -44,7 +44,7 @@ export class BoardStore {
 
   /** Título e descrição são texto: vão com If-Match, para não sobrescrever o que foi escrito em outra aba. */
   async rename(id: string, title: string): Promise<void> {
-    await this.changeText(id, { title });
+    await this.saveText(id, { title });
   }
 
   async changeColor(id: string, color: string): Promise<void> {
@@ -56,7 +56,7 @@ export class BoardStore {
   }
 
   async changeContent(id: string, content: Card['content']): Promise<void> {
-    await this.changeText(id, { content });
+    await this.saveText(id, { content });
   }
 
   async setProperties(id: string, properties: Card['properties']): Promise<void> {
@@ -122,7 +122,7 @@ export class BoardStore {
   }
 
   /** Se o cartão mudou em outro lugar (`concurrency.stale`), recarrega o quadro antes de repassar o erro. */
-  private async changeText(id: string, changes: CardChanges): Promise<void> {
+  async saveText(id: string, changes: Pick<CardChanges, 'title' | 'content'>): Promise<void> {
     try {
       await this.change(id, changes, this.cards().find((c) => c.id === id)?.version);
     } catch (error) {
