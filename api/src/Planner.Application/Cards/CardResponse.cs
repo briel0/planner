@@ -35,6 +35,7 @@ public sealed record CardResponse(
     string Color,
     PositionDto Position,
     SizeDto Size,
+    int DescriptionFontSize,
     int Layer,
     CardPropertiesDto Properties,
     JsonElement? Content,

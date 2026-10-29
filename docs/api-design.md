@@ -107,6 +107,8 @@ Card-specific fields:
 
 - **`childCount`** (summary and full): how many cards are on the card's own board. Lets clients show that a
   card has content inside and ask for confirmation before deleting a subtree, without loading it.
+- **`descriptionFontSize`** (summary and full): description text size in canvas pixels, from 10 to 32;
+  defaults to 14. A `PATCH` can update it independently; omission or null leaves it unchanged.
 - **`ancestors`** (full representation only): the cards above this one, from the root down to the direct parent,
   as `{ "id", "title" }`. Clients build the navigation trail (category › card › card) from it in one request.
 

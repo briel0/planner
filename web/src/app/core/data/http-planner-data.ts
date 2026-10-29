@@ -83,6 +83,7 @@ function toCard(card: CardResponse): Card {
     color: card.color,
     position: card.position,
     size: card.size,
+    descriptionFontSize: card.descriptionFontSize,
     layer: card.layer,
     properties: {
       ...(card.properties.dueOn ? { dueOn: card.properties.dueOn } : {}),

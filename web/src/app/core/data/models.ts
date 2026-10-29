@@ -46,6 +46,8 @@ export interface Card {
   color: string;
   position: Position;
   size: Size;
+  /** Tamanho da fonte da descrição em pixels do canvas. */
+  descriptionFontSize: number;
   /** Ordem de sobreposição no quadro: maior fica na frente. */
   layer: number;
   properties: CardProperties;
@@ -79,6 +81,7 @@ export interface CardChanges {
   color?: string;
   position?: Position;
   size?: Size;
+  descriptionFontSize?: number;
   properties?: CardProperties;
   content?: ContentDoc | null;
 }

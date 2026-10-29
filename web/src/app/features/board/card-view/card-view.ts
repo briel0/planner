@@ -14,6 +14,7 @@ import { Editor } from '@tiptap/core';
 import { MatIcon } from '@angular/material/icon';
 import { CARD_CONTENT_EXTENSIONS, ContentDoc, isEmptyContent, renderContent } from '../../../core/content/card-content';
 import { clampSize } from '../../../core/data/card-size';
+import { DESCRIPTION_FONT } from '../../../core/data/description-font';
 import { Card, Position, Size } from '../../../core/data/models';
 import { readableTextColor } from '../../../shared/ui/color/readable-text-color';
 import { trackPointer } from '../viewport/track-pointer';
@@ -40,6 +41,8 @@ export type CardKeyAction = 'open' | 'rename' | 'delete';
     '[style.height.px]': 'size().height',
     '[class.resizing]': 'liveSize() !== null',
     '[class.dragging]': 'dragOffset() !== null',
+    '[class.editing-description]': 'editingDescription()',
+    '[style.--description-font-size]': 'card().descriptionFontSize + "px"',
     '[style.transform]': '`translate(${position().x}px, ${position().y}px)`',
     '(pointerdown)': 'startDrag($event)',
     '(click)': 'onClick($event)',
@@ -54,6 +57,7 @@ export class CardView {
   readonly editing = input(false);
   /** A descrição está sendo editada (no lugar dela aparece o editor). */
   readonly editingDescription = input(false);
+  readonly fontSizeSaving = input(false);
   /** Zoom atual do canvas: os gestos do mouse (em pixels da tela) são divididos por ele. */
   readonly zoom = input(1);
 
@@ -67,6 +71,18 @@ export class CardView {
   readonly descriptionEditRequested = output<void>();
   /** Fim da edição da descrição: o documento novo, ou nulo se ficou vazio. */
   readonly descriptionChanged = output<ContentDoc | null>();
+  readonly descriptionFontSizeChanged = output<number>();
+  protected readonly descriptionFont = DESCRIPTION_FONT;
+
+  protected adjustDescriptionFontSize(direction: number): void {
+    const next = Math.max(
+      DESCRIPTION_FONT.min,
+      Math.min(DESCRIPTION_FONT.max, this.card().descriptionFontSize + direction * DESCRIPTION_FONT.step),
+    );
+    if (next !== this.card().descriptionFontSize) {
+      this.descriptionFontSizeChanged.emit(next);
+    }
+  }
 
   /** Deslocamento durante o arrastar (antes de soltar), em pixels da tela; nulo no resto do tempo. */
   protected readonly dragOffset = signal<Position | null>(null);
@@ -109,11 +125,6 @@ export class CardView {
     inject(DestroyRef).onDestroy(() => this.editor?.destroy());
   }
 
-  protected onDescriptionDoubleClick(event: MouseEvent): void {
-    event.stopPropagation(); // edita, em vez de abrir o quadro do cartão
-    this.descriptionEditRequested.emit();
-  }
-
   private startEditor(host: HTMLElement): void {
     this.editor = new Editor({
       element: host,
@@ -152,8 +163,14 @@ export class CardView {
 
   protected onDoubleClick(event: MouseEvent): void {
     event.stopPropagation(); // não cria um cartão novo pelo canvas
-    if (!this.editing()) {
+    const target = event.target as HTMLElement;
+    if (this.editing() || this.editingDescription() || target.closest('.resize-handle, .font-controls')) {
+      return;
+    }
+    if (target.closest('.title')) {
       this.keyAction.emit('open');
+    } else {
+      this.descriptionEditRequested.emit();
     }
   }
 
@@ -165,7 +182,12 @@ export class CardView {
   }
 
   protected onKeydown(event: KeyboardEvent): void {
-    if (this.editing() || this.editingDescription() || (event.target as HTMLElement).isContentEditable) {
+    if (
+      this.editing() ||
+      this.editingDescription() ||
+      (event.target as HTMLElement).isContentEditable ||
+      (event.target as HTMLElement).closest('button')
+    ) {
       return; // as teclas pertencem ao campo de texto
     }
     const action = KEY_ACTIONS[event.key];
@@ -178,7 +200,7 @@ export class CardView {
   /** Arrastar o cartão o move; a posição só é avisada (e salva) ao soltar. */
   protected startDrag(event: PointerEvent): void {
     const target = event.target as HTMLElement;
-    const busy = this.editing() || this.editingDescription() || target.closest('.resize-handle, input');
+    const busy = this.editing() || this.editingDescription() || target.closest('.resize-handle, input, button');
     if (event.button !== 0 || busy) {
       return;
     }

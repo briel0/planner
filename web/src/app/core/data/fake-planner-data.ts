@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CARD_SIZE } from './card-size';
+import { DESCRIPTION_FONT } from './description-font';
 import { newId } from './ids';
 import { Card, CardChanges, CardDetails, CardLocation, CardProperties, Category, Position, Size } from './models';
 import { PlannerData, PlannerDataError } from './planner-data';
@@ -116,6 +117,7 @@ export class FakePlannerData extends PlannerData {
       color: DEFAULT_CARD_COLOR,
       position: this.validatePosition(input.position),
       size: { ...CARD_SIZE.default },
+      descriptionFontSize: DESCRIPTION_FONT.default,
       layer: Math.max(-1, ...siblings.map((c) => c.layer)) + 1, // nasce na frente dos outros
       properties: {},
       content: null,
@@ -137,6 +139,10 @@ export class FakePlannerData extends PlannerData {
       color: changes.color === undefined ? card.color : this.validateColor(changes.color),
       position: changes.position === undefined ? card.position : this.validatePosition(changes.position),
       size: changes.size === undefined ? card.size : this.validateSize(changes.size),
+      descriptionFontSize:
+        changes.descriptionFontSize === undefined
+          ? card.descriptionFontSize
+          : this.validateDescriptionFontSize(changes.descriptionFontSize),
       properties: changes.properties === undefined ? card.properties : withoutEmpty(changes.properties),
       content: changes.content === undefined ? card.content : this.validateContent(changes.content),
       updatedAt: now(),
@@ -247,6 +253,17 @@ export class FakePlannerData extends PlannerData {
     return { width: size.width, height: size.height };
   }
 
+  private validateDescriptionFontSize(fontSize: number): number {
+    if (!Number.isInteger(fontSize) || fontSize < DESCRIPTION_FONT.min || fontSize > DESCRIPTION_FONT.max) {
+      throw new PlannerDataError(
+        'card.invalid-font-size',
+        400,
+        'Description font size must be between 10 and 32 pixels.',
+      );
+    }
+    return fontSize;
+  }
+
   // ---- Dados iniciais --------------------------------------------------------------------------------------
 
   private seed(): void {
@@ -263,6 +280,7 @@ export class FakePlannerData extends PlannerData {
         color: DEFAULT_CARD_COLOR,
         position: { x, y },
         size: { ...CARD_SIZE.default },
+        descriptionFontSize: DESCRIPTION_FONT.default,
         layer: 0,
         properties: {},
         content: null,

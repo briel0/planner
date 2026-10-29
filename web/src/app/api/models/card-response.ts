@@ -13,6 +13,7 @@ export interface CardResponse {
   color: string;
   content: null | JsonElement;
   createdAt: string;
+  descriptionFontSize: number;
   id: string;
   layer: number;
   parentId: string | null;

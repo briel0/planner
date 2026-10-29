@@ -1,0 +1,72 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
+import { FakePlannerData } from '../../../core/data/fake-planner-data';
+import { Card } from '../../../core/data/models';
+import { CardView } from './card-view';
+
+describe('CardView', () => {
+  let fixture: ComponentFixture<CardView>;
+  let card: Card;
+  let element: HTMLElement;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [CardView] }).compileComponents();
+    const data = new FakePlannerData();
+    const [category] = await data.listCategories();
+    card = (await data.listRootCards(category.id)).find((item) => item.title === 'AED')!;
+    fixture = TestBed.createComponent(CardView);
+    fixture.componentRef.setInput('card', card);
+    fixture.detectChanges();
+    element = fixture.nativeElement;
+  });
+
+  it('edits an empty description from the card body and opens only from the title', () => {
+    const edit = vi.fn();
+    const open = vi.fn();
+    fixture.componentInstance.descriptionEditRequested.subscribe(edit);
+    fixture.componentInstance.keyAction.subscribe(open);
+
+    element.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(edit).toHaveBeenCalledOnce();
+    expect(open).not.toHaveBeenCalled();
+
+    element.querySelector('.title')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(open).toHaveBeenCalledWith('open');
+  });
+
+  it('changes only the description font without opening the card or starting editing', () => {
+    const resize = vi.fn();
+    const open = vi.fn();
+    const edit = vi.fn();
+    fixture.componentInstance.descriptionFontSizeChanged.subscribe(resize);
+    fixture.componentInstance.keyAction.subscribe(open);
+    fixture.componentInstance.descriptionEditRequested.subscribe(edit);
+
+    const [minus, plus] = element.querySelectorAll<HTMLButtonElement>('.font-controls button');
+    plus.click();
+    minus.click();
+    plus.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    plus.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+    expect(resize.mock.calls).toEqual([[16], [12]]);
+    expect(open).not.toHaveBeenCalled();
+    expect(edit).not.toHaveBeenCalled();
+  });
+
+  it('disables controls at their limits and while a save is pending', () => {
+    fixture.componentRef.setInput('card', { ...card, descriptionFontSize: 10 });
+    fixture.detectChanges();
+    const [minus, plus] = element.querySelectorAll<HTMLButtonElement>('.font-controls button');
+    expect(minus.disabled).toBe(true);
+    expect(plus.disabled).toBe(false);
+
+    fixture.componentRef.setInput('card', { ...card, descriptionFontSize: 32 });
+    fixture.detectChanges();
+    expect(plus.disabled).toBe(true);
+
+    fixture.componentRef.setInput('fontSizeSaving', true);
+    fixture.detectChanges();
+    expect(minus.disabled).toBe(true);
+    expect(plus.disabled).toBe(true);
+  });
+});

@@ -16,6 +16,11 @@ export interface UpdateCardRequest {
    */
   color?: string | null;
   content?: null | JsonElement;
+
+  /**
+   * Tamanho da fonte da descrição, de 10 a 32 pixels. Ausente, não muda.
+   */
+  descriptionFontSize?: number | null;
   location?: null | CardLocationRequest;
   position?: null | PositionDto;
   properties?: null | CardPropertiesDto;

@@ -52,6 +52,12 @@ namespace Planner.Infrastructure.Persistence.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("now()");
 
+                    b.Property<int>("DescriptionFontSize")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(14)
+                        .HasColumnName("description_font_size");
+
                     b.Property<int>("Layer")
                         .HasColumnType("integer")
                         .HasColumnName("layer");
@@ -128,6 +134,8 @@ namespace Planner.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("ck_cards_color", "color ~ '^#[0-9a-f]{6}$'");
 
                             t.HasCheckConstraint("ck_cards_content", "content IS NULL OR jsonb_typeof(content) = 'object'");
+
+                            t.HasCheckConstraint("ck_cards_description_font_size", "description_font_size BETWEEN 10 AND 32");
 
                             t.HasCheckConstraint("ck_cards_properties", "jsonb_typeof(properties) = 'object'");
 

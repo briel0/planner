@@ -60,6 +60,9 @@ public sealed class CardUseCases(
         if(changes.Size is { } size) {
             card.Resize(size);
         }
+        if(changes.DescriptionFontSize is { } fontSize) {
+            card.ChangeDescriptionFontSize(fontSize);
+        }
         if(changes.Content is { } content) {
             card.ChangeContent(content.Json);
         }

@@ -23,4 +23,5 @@ public sealed record CardChanges(
     Size? Size = null,
     ContentChange? Content = null,
     CardProperties? Properties = null,
-    CardLocation? Location = null);
+    CardLocation? Location = null,
+    int? DescriptionFontSize = null);

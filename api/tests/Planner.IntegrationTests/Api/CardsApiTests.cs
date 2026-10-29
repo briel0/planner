@@ -54,6 +54,7 @@ public class CardsApiTests(PlannerFixture planner) {
         var updated = await ReadCardAsync(await PatchAsync(card.Id, new {
             color = "#3B82F6",
             size = new { width = 300, height = 150 },
+            descriptionFontSize = 20,
             content = new { type = "doc", content = Array.Empty<object>() },
             properties = new { dueOn = "2026-09-30" },
         }));
@@ -62,6 +63,8 @@ public class CardsApiTests(PlannerFixture planner) {
 
         Assert.Equal("#3b82f6", updated.Color);
         Assert.Equal(new SizeDto(300, 150), updated.Size);
+        Assert.Equal(20, updated.DescriptionFontSize);
+        Assert.Equal(20, renamed.DescriptionFontSize);
         Assert.Equal(new DateOnly(2026, 9, 30), updated.Properties.DueOn);
         Assert.Null(updated.Properties.Done);
         Assert.NotNull(renamed.Content); // ausente no PATCH: não mudou

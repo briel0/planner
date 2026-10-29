@@ -20,6 +20,10 @@ The system records **when** each user, category and card was **created** and **l
 
 When a category is deleted, **all of its cards are deleted with it**. When a card is deleted, **everything inside its board is deleted too**, at every level.
 
+Each card also stores its **description font size**, independently of the title: 14 canvas pixels by default,
+with allowed values from 10 to 32 pixels. This is a presentation setting, not a task property or part of the
+rich-text document. It remains the same when the card is reopened or moved.
+
 ## Out of scope for now
 
 - Sharing categories or cards between users.

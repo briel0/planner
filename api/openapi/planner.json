@@ -544,7 +544,7 @@
         "tags": [
           "Cards"
         ],
-        "summary": "Altera os campos enviados, ou move o cartão (`location`). Com If-Match, só se o cartão ainda estiver\nnaquela versão (senão 412). Mover para dentro de um descendente é recusado (409 card.cycle).",
+        "summary": "Altera os campos enviados, ou move o cartão (`location`). Com If-Match, só se o cartão ainda estiver\r\nnaquela versão (senão 412). Mover para dentro de um descendente é recusado (409 card.cycle).",
         "operationId": "UpdateCard",
         "parameters": [
           {
@@ -749,6 +749,7 @@
           "color",
           "position",
           "size",
+          "descriptionFontSize",
           "layer",
           "properties",
           "content",
@@ -785,6 +786,10 @@
           },
           "size": {
             "$ref": "#/components/schemas/SizeDto"
+          },
+          "descriptionFontSize": {
+            "type": "integer",
+            "format": "int32"
           },
           "layer": {
             "type": "integer",
@@ -1013,6 +1018,14 @@
                 "$ref": "#/components/schemas/SizeDto"
               }
             ]
+          },
+          "descriptionFontSize": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Tamanho da fonte da descrição, de 10 a 32 pixels. Ausente, não muda.",
+            "format": "int32"
           },
           "content": {
             "oneOf": [

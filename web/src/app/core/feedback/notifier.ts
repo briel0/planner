@@ -10,6 +10,7 @@ const MESSAGES: Record<string, string> = {
   'card.invalid-color': 'Cor inválida.',
   'card.invalid-position': 'Posição inválida.',
   'card.invalid-size': 'Tamanho fora dos limites permitidos.',
+  'card.invalid-font-size': 'A fonte da descrição deve ter entre 10 e 32 pixels.',
   'card.invalid-content': 'Descrição inválida.',
   'card.cycle': 'Não é possível colocar um cartão dentro dele mesmo ou de um cartão que está dentro dele.',
   'card.invalid-location': 'Destino inválido para o cartão.',

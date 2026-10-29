@@ -51,6 +51,10 @@ export class BoardStore {
     await this.change(id, { color });
   }
 
+  async changeDescriptionFontSize(id: string, descriptionFontSize: number): Promise<void> {
+    await this.change(id, { descriptionFontSize });
+  }
+
   async changeContent(id: string, content: Card['content']): Promise<void> {
     await this.changeText(id, { content });
   }

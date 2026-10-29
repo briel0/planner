@@ -1,3 +1,26 @@
+<div class="font-controls" role="group" aria-label="Tamanho da fonte da descrição">
+  <button
+    type="button"
+    aria-label="Diminuir fonte da descrição"
+    title="Diminuir fonte da descrição"
+    [disabled]="fontSizeSaving() || card().descriptionFontSize <= descriptionFont.min"
+    (pointerdown)="$event.preventDefault(); $event.stopPropagation()"
+    (click)="$event.stopPropagation(); adjustDescriptionFontSize(-1)"
+  >
+    −
+  </button>
+  <button
+    type="button"
+    aria-label="Aumentar fonte da descrição"
+    title="Aumentar fonte da descrição"
+    [disabled]="fontSizeSaving() || card().descriptionFontSize >= descriptionFont.max"
+    (pointerdown)="$event.preventDefault(); $event.stopPropagation()"
+    (click)="$event.stopPropagation(); adjustDescriptionFontSize(1)"
+  >
+    +
+  </button>
+</div>
+
 @if (editing()) {
   <input
     #titleInput
@@ -17,7 +40,7 @@
 @if (editingDescription()) {
   <div #editorHost class="card-description editing"></div>
 } @else if (descriptionHtml(); as html) {
-  <div class="card-description" [innerHTML]="html" (dblclick)="onDescriptionDoubleClick($event)"></div>
+  <div class="card-description" [innerHTML]="html"></div>
 }
 
 <!-- Alça de redimensionar: o canto inferior direito. -->

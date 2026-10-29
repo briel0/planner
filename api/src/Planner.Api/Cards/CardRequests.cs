@@ -28,6 +28,9 @@ public sealed record UpdateCardRequest {
 
     public SizeDto? Size { get; init; }
 
+    /// <summary>Tamanho da fonte da descrição, de 10 a 32 pixels. Ausente, não muda.</summary>
+    public int? DescriptionFontSize { get; init; }
+
     /// <summary>
     /// A descrição (documento do Tiptap, sempre um objeto JSON). <c>null</c> apaga a descrição; ausente, não muda.
     /// </summary>

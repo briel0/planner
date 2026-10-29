@@ -26,6 +26,7 @@ internal sealed class CardConfiguration : IEntityTypeConfiguration<Card> {
         builder.HasOne<Card>().WithMany().HasForeignKey(c => c.ParentId).OnDelete(DeleteBehavior.Cascade);
 
         builder.Property(c => c.Color).HasDefaultValue(Card.DefaultColor);
+        builder.Property(c => c.DescriptionFontSize).HasDefaultValue(Card.DefaultDescriptionFontSize);
 
         // Position (objeto de valor) ↔ duas colunas.
         builder.ComplexProperty(c => c.Position, position => {
@@ -55,6 +56,9 @@ internal sealed class CardConfiguration : IEntityTypeConfiguration<Card> {
         builder.ToTable(table => {
             table.HasCheckConstraint("ck_cards_title", Checks.RequiredText("title", Card.TitleMaxLength));
             table.HasCheckConstraint("ck_cards_color", "color ~ '^#[0-9a-f]{6}$'");
+            table.HasCheckConstraint(
+                "ck_cards_description_font_size",
+                $"description_font_size BETWEEN {Card.MinDescriptionFontSize} AND {Card.MaxDescriptionFontSize}");
             table.HasCheckConstraint(
                 "ck_cards_size",
                 $"width BETWEEN {Size.MinWidth} AND {Size.MaxWidth} AND height BETWEEN {Size.MinHeight} AND {Size.MaxHeight}");

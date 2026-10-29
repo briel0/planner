@@ -47,6 +47,7 @@ export class BoardPage {
   protected readonly selectedId = signal<string | null>(null);
   protected readonly editingId = signal<string | null>(null);
   protected readonly editingDescriptionId = signal<string | null>(null);
+  protected readonly savingFontSizeIds = signal<ReadonlySet<string>>(new Set());
   protected readonly menuCard = signal<Card | null>(null);
   protected readonly menuPosition = signal<Position>({ x: 0, y: 0 });
 
@@ -210,6 +211,18 @@ export class BoardPage {
     this.editingDescriptionId.set(null);
     if (JSON.stringify(content) !== JSON.stringify(card.content)) {
       await this.run(() => this.store.changeContent(card.id, content));
+    }
+  }
+
+  protected async onDescriptionFontSizeChanged(card: Card, fontSize: number): Promise<void> {
+    if (this.savingFontSizeIds().has(card.id)) {
+      return;
+    }
+    this.savingFontSizeIds.update((ids) => new Set([...ids, card.id]));
+    try {
+      await this.run(() => this.store.changeDescriptionFontSize(card.id, fontSize));
+    } finally {
+      this.savingFontSizeIds.update((ids) => new Set([...ids].filter((id) => id !== card.id)));
     }
   }
 

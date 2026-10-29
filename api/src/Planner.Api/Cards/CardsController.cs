@@ -98,7 +98,8 @@ public sealed class CardsController(CardUseCases cards) : ControllerBase {
             _ => new ContentChange(request.Content.GetRawText()),
         },
         request.Properties is { } properties ? new CardProperties(properties.DueOn, properties.Done) : null,
-        request.Location is { } location ? CardLocation.Validate(location.CategoryId, location.ParentId) : null);
+        request.Location is { } location ? CardLocation.Validate(location.CategoryId, location.ParentId) : null,
+        request.DescriptionFontSize);
 
     private CardResponse WithETag(CardResponse card) {
         Response.Headers.ETag = $"\"{card.Version}\"";

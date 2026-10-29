@@ -10,6 +10,9 @@ namespace Planner.Domain.Cards;
 public sealed partial class Card {
     public const string DefaultColor = "#e5e7eb";
     public const int TitleMaxLength = 200;
+    public const int DefaultDescriptionFontSize = 14;
+    public const int MinDescriptionFontSize = 10;
+    public const int MaxDescriptionFontSize = 32;
 
     private Card(Guid id, Guid categoryId, Guid? parentId, string title) {
         Id = id;
@@ -38,6 +41,9 @@ public sealed partial class Card {
     public Position Position { get; private set; }
 
     public Size Size { get; private set; }
+
+    /// <summary>Tamanho da fonte da descrição, em pixels do canvas.</summary>
+    public int DescriptionFontSize { get; private set; } = DefaultDescriptionFontSize;
 
     /// <summary>Ordem de sobreposição no quadro: maior fica na frente.</summary>
     public int Layer { get; private set; }
@@ -76,6 +82,13 @@ public sealed partial class Card {
     }
 
     public void ChangeLayer(int layer) => Layer = layer;
+
+    public void ChangeDescriptionFontSize(int fontSize) {
+        if(fontSize is < MinDescriptionFontSize or > MaxDescriptionFontSize) {
+            throw new DomainException("card.invalid-font-size", "Description font size must be between 10 and 32 pixels.");
+        }
+        DescriptionFontSize = fontSize;
+    }
 
     public void ChangeContent(string? content) {
         if(content is not null && !IsJsonObject(content)) {

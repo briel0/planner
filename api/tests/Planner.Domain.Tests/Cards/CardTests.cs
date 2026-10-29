@@ -5,6 +5,31 @@ namespace Planner.Domain.Tests.Cards;
 public class CardTests {
     private static Card CreateCard() => Card.Create(Guid.CreateVersion7(), categoryId: Guid.CreateVersion7(), "Lista 3");
 
+    [Theory]
+    [InlineData(10)]
+    [InlineData(14)]
+    [InlineData(32)]
+    public void Description_font_size_accepts_values_within_limits(int fontSize) {
+        var card = CreateCard();
+        Assert.Equal(14, card.DescriptionFontSize);
+
+        card.ChangeDescriptionFontSize(fontSize);
+
+        Assert.Equal(fontSize, card.DescriptionFontSize);
+    }
+
+    [Theory]
+    [InlineData(9)]
+    [InlineData(33)]
+    public void Description_font_size_rejects_values_outside_limits(int fontSize) {
+        var card = CreateCard();
+
+        var error = Assert.Throws<DomainException>(() => card.ChangeDescriptionFontSize(fontSize));
+
+        Assert.Equal("card.invalid-font-size", error.Code);
+        Assert.Equal(14, card.DescriptionFontSize);
+    }
+
     [Fact]
     public void ChangeColor_normalizes_to_lowercase() {
         var card = CreateCard();
