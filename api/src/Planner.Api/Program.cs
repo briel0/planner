@@ -59,23 +59,22 @@ builder.Services.AddControllers(options => {
         };
     });
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict);
-builder.Services.AddOpenApi(options =>
-    // O conteúdo dos cartões (JsonElement) é sempre um objeto JSON (documento do Tiptap), não "qualquer valor".
-    options.AddSchemaTransformer((schema, context, _) => {
-        var type = context.JsonTypeInfo.Type;
-        if((Nullable.GetUnderlyingType(type) ?? type) == typeof(JsonElement) && schema.OneOf is not { Count: > 0 }) {
-            schema.Type = JsonSchemaType.Object;
-            schema.AdditionalPropertiesAllowed = true;
-        }
-        // No PATCH, "content": null apaga a descrição: o contrato precisa dizer que null é aceito.
-        if(type == typeof(UpdateCardRequest) && schema.Properties?.TryGetValue("content", out var content) == true) {
-            schema.Properties["content"] = new OpenApiSchema {
-                Description = content.Description,
-                OneOf = [new OpenApiSchema { Type = JsonSchemaType.Null }, content],
-            };
-        }
-        return Task.CompletedTask;
-    }));
+// O conteúdo dos cartões (JsonElement) é sempre um objeto JSON (documento do Tiptap), não "qualquer valor".
+builder.Services.AddOpenApi(options => options.AddSchemaTransformer((schema, context, _) => {
+    var type = context.JsonTypeInfo.Type;
+    if((Nullable.GetUnderlyingType(type) ?? type) == typeof(JsonElement) && schema.OneOf is not { Count: > 0 }) {
+        schema.Type = JsonSchemaType.Object;
+        schema.AdditionalPropertiesAllowed = true;
+    }
+    // No PATCH, "content": null apaga a descrição: o contrato precisa dizer que null é aceito.
+    if(type == typeof(UpdateCardRequest) && schema.Properties?.TryGetValue("content", out var content) == true) {
+        schema.Properties["content"] = new OpenApiSchema {
+            Description = content.Description,
+            OneOf = [new OpenApiSchema { Type = JsonSchemaType.Null }, content],
+        };
+    }
+    return Task.CompletedTask;
+}));
 
 var app = builder.Build();
 
