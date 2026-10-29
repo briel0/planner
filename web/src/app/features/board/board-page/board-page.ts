@@ -49,6 +49,7 @@ export class BoardPage {
   protected readonly editingDescriptionId = signal<string | null>(null);
   protected readonly savingFontSizeIds = signal<ReadonlySet<string>>(new Set());
   protected readonly menuCard = signal<Card | null>(null);
+  protected readonly colorPreview = signal<{ id: string; color: string } | null>(null);
   protected readonly menuPosition = signal<Position>({ x: 0, y: 0 });
 
   /** A "câmera" sobre o canvas (zoom e deslocamento), lembrada por quadro durante a sessão. */
@@ -241,6 +242,7 @@ export class BoardPage {
 
   /** Cor livre: o seletor de cores nativo do navegador. */
   protected pickColor(card: Card): void {
+    this.colorPreview.set(null);
     const input = this.colorInput().nativeElement;
     input.value = card.color;
     input.showPicker();
@@ -248,8 +250,20 @@ export class BoardPage {
 
   protected async onColorPicked(value: string): Promise<void> {
     const card = this.menuCard();
+    const preview = this.colorPreview();
     if (card && value !== card.color) {
       await this.run(() => this.store.changeColor(card.id, value));
+    }
+    if (this.colorPreview() === preview) {
+      this.colorPreview.set(null);
+    }
+  }
+
+  /** O evento input acompanha o seletor sem fazer uma requisição a cada movimento. */
+  protected onColorPreview(value: string): void {
+    const card = this.menuCard();
+    if (card) {
+      this.colorPreview.set({ id: card.id, color: value });
     }
   }
 
@@ -295,6 +309,7 @@ export class BoardPage {
   // ---- Apoio -----------------------------------------------------------------------------------------------
 
   private async openBoard(categoryId: string | undefined, cardId: string | undefined): Promise<void> {
+    this.colorPreview.set(null);
     this.selectedId.set(null);
     this.editingId.set(null);
     this.editingDescriptionId.set(null);

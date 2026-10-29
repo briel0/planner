@@ -36,7 +36,7 @@ export type CardKeyAction = 'open' | 'rename' | 'delete';
     '[class.selected]': 'selected()',
     '[class.done]': 'card().properties.done === true',
     '[class.light-text]': "textColor() === 'light'",
-    '[style.background-color]': 'card().color',
+    '[style.background-color]': 'displayColor()',
     '[style.width.px]': 'size().width',
     '[style.height.px]': 'size().height',
     '[class.resizing]': 'liveSize() !== null',
@@ -53,6 +53,8 @@ export type CardKeyAction = 'open' | 'rename' | 'delete';
 })
 export class CardView {
   readonly card = input.required<Card>();
+  /** Cor temporária do seletor; o dado salvo só muda na confirmação. */
+  readonly previewColor = input<string | null>(null);
   readonly selected = input(false);
   readonly editing = input(false);
   /** A descrição está sendo editada (no lugar dela aparece o editor). */
@@ -96,7 +98,8 @@ export class CardView {
   protected readonly liveSize = signal<Size | null>(null);
   protected readonly size = computed(() => this.liveSize() ?? this.card().size);
 
-  protected readonly textColor = computed(() => readableTextColor(this.card().color));
+  protected readonly displayColor = computed(() => this.previewColor() ?? this.card().color);
+  protected readonly textColor = computed(() => readableTextColor(this.displayColor()));
   protected readonly due = computed(() => describeDue(this.card().properties.dueOn, this.card().properties.done));
 
   /** HTML da descrição para exibir; nulo quando o cartão não tem descrição. */

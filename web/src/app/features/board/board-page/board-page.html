@@ -55,6 +55,7 @@
           <app-card-view
             [style.z-index]="card.layer"
             [card]="card"
+            [previewColor]="colorPreview()?.id === card.id ? colorPreview()!.color : null"
             [zoom]="viewport().zoom"
             [selected]="selectedId() === card.id"
             [editing]="editingId() === card.id"
@@ -139,6 +140,7 @@
   aria-label="Cor do cartão"
   [style.left.px]="menuPosition().x"
   [style.top.px]="menuPosition().y"
+  (input)="onColorPreview(colorInput.value)"
   (change)="onColorPicked(colorInput.value)"
 />
 <input

@@ -69,4 +69,23 @@ describe('CardView', () => {
     expect(minus.disabled).toBe(true);
     expect(plus.disabled).toBe(true);
   });
+
+  it('previews the background and readable text without changing the saved card', () => {
+    const originalColor = card.color;
+    fixture.componentRef.setInput('previewColor', '#000000');
+    fixture.detectChanges();
+    expect(element.style.backgroundColor).toBe('rgb(0, 0, 0)');
+    expect(element.classList.contains('light-text')).toBe(true);
+    expect(card.color).toBe(originalColor);
+
+    fixture.componentRef.setInput('previewColor', '#ffffff');
+    fixture.detectChanges();
+    expect(element.style.backgroundColor).toBe('rgb(255, 255, 255)');
+    expect(element.classList.contains('light-text')).toBe(false);
+
+    fixture.componentRef.setInput('previewColor', null);
+    fixture.detectChanges();
+    expect(element.style.backgroundColor).not.toBe('rgb(255, 255, 255)');
+    expect(card.color).toBe(originalColor);
+  });
 });
